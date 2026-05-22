@@ -5,7 +5,8 @@ import (
 	"regexp"
 )
 
-var variablePattern = regexp.MustCompile(`\$([A-Z_][A-Z0-9_]*)`)
+// Match variables in the form of {{ env.VAR_NAME }}
+var variablePattern = regexp.MustCompile(`\{\{\s*env\.([A-Z_][A-Z0-9_]*)\s*\}\}`)
 
 func FromEnviron(environ []string) map[string]string {
 	vars := make(map[string]string, len(environ))
@@ -22,7 +23,15 @@ func FromEnviron(environ []string) map[string]string {
 func Strict(input []byte, vars map[string]string) ([]byte, error) {
 	missing := map[string]struct{}{}
 	output := variablePattern.ReplaceAllStringFunc(string(input), func(match string) string {
-		key := match[1:]
+		// Get matching group, which is the variable name without the "env." prefix
+		submatches := variablePattern.FindStringSubmatch(match)
+
+		if len(submatches) < 2 {
+			// This should not happen, but just in case, return the original match
+			return match
+		}
+
+		key := submatches[1]
 		value, ok := vars[key]
 		if !ok {
 			missing[key] = struct{}{}

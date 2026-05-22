@@ -6,7 +6,7 @@ import (
 )
 
 func TestStrictReplacesVariables(t *testing.T) {
-	input := []byte("message: $GREETING\n")
+	input := []byte("message: {{ env.GREETING }}\n")
 	output, err := Strict(input, map[string]string{"GREETING": "hello"})
 	if err != nil {
 		t.Fatalf("Strict returned error: %v", err)
@@ -18,7 +18,7 @@ func TestStrictReplacesVariables(t *testing.T) {
 }
 
 func TestStrictFailsOnMissingVariables(t *testing.T) {
-	_, err := Strict([]byte("message: $GREETING\n"), map[string]string{})
+	_, err := Strict([]byte("message: {{ env.GREETING }}\n"), map[string]string{})
 	if err == nil {
 		t.Fatal("expected missing variable error")
 	}

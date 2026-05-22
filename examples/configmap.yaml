@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: sample
 data:
-  greeting: "$GREETING"
+  greeting: "{{ env.GREETING }} {{ env.NAME }}"
