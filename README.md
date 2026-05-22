@@ -13,7 +13,7 @@ The repository keeps the MVP in one place:
 
 ## MVP goals
 
-- strict `$VAR` substitution
+- strict `{{ env.VAR }}` substitution
 - deterministic output
 - fail on missing variables
 - no loops, patches, overlays, or packaging system
@@ -28,3 +28,32 @@ go run ./cmd/kubenv render -f examples/configmap.yaml
 ```sh
 GREETING=hello go run ./cmd/kubenv render -f examples/configmap.yaml
 ```
+
+```sh
+go run ./cmd/kubenv render --env -f examples/configmap.yaml
+```
+
+```sh
+go run ./cmd/kubenv render --env-file .env.dev --set NAME=world -f examples/configmap.yaml
+```
+
+```sh
+go run ./cmd/kubenv render -f first.yaml -f second.yaml
+```
+
+## Variable sources
+
+`kubenv render` loads variables with this precedence:
+
+1. `--set KEY=VALUE`
+2. process environment
+3. `.env` via `--env` or a specific file via `--env-file`
+
+Notes:
+
+- `--env` loads `.env`
+- `--env-file <path>` loads a specific dotenv file
+- `--ignore-process-env` disables process environment loading
+- `--env` and `--env-file` are mutually exclusive
+- `-f` may be repeated and files are rendered in the order provided
+- dotenv parsing is intentionally minimal: blank lines and `#` comments are supported, and variable lines must be `KEY=VALUE`
