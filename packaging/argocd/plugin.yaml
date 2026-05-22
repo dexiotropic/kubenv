@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ConfigManagementPlugin
+metadata:
+  name: kubenv
+spec:
+  version: v0.1.0
+  generate:
+    command: [sh, -c]
+    args:
+      - find . -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 | xargs -0 cat | kubenv-argocd-cmp
+  discover:
+    find:
+      command: [sh, -c, "find . -name '.kubenv.yaml' -o -name 'kubenv.yaml' | grep ."]

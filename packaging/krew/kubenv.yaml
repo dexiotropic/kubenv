@@ -1,0 +1,11 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: kubenv
+spec:
+  version: v0.0.0
+  homepage: https://github.com/dexiotropic/kubenv
+  shortDescription: Strict variable substitution for Kubernetes manifests
+  description: |
+    kubenv renders Kubernetes manifests using strict environment-backed variable substitution.
+  platforms: []

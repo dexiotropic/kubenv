@@ -1,0 +1,4 @@
+apiVersion: kubenv.dev/v1alpha1
+kind: Project
+spec:
+  mode: strict
