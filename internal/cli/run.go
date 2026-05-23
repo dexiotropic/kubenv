@@ -7,11 +7,24 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/dexiotropic/kubenv/internal/render"
 )
 
+var kubectlApply = func(input []byte, stdout, stderr io.Writer, args []string) error {
+	commandArgs := append([]string{"apply"}, args...)
+	commandArgs = append(commandArgs, "-f", "-")
+
+	cmd := exec.Command("kubectl", commandArgs...)
+	cmd.Stdin = bytes.NewReader(input)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	return cmd.Run()
+}
+
+// Entry point for the kubenv CLI
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
 	if len(args) == 0 {
 		return usage(stderr)
@@ -20,6 +33,8 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []str
 	switch args[0] {
 	case "render":
 		return runRender(args[1:], stdin, stdout, environ)
+	case "apply":
+		return runApply(args[1:], stdin, stdout, stderr, environ)
 	case "version":
 		_, err := fmt.Fprintln(stdout, "kubenv dev")
 		return err
@@ -28,35 +43,33 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []str
 	}
 }
 
+// Entry point for the kubectl plugin
+func RunKubectlPlugin(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
+	if len(args) == 0 {
+		return kubectlPluginUsage(stderr)
+	}
+
+	// If the first argument is a known command, run it directly. Otherwise, look for "apply" to determine if we're in plugin mode.
+	// For example, "kubectl kubenv render -f manifest.yaml" should run the render command
+	if isCommand(args[0]) {
+		return Run(args, stdin, stdout, stderr, environ)
+	}
+
+	applyIndex := indexOf(args, "apply")
+	if applyIndex == -1 {
+		return kubectlPluginUsage(stderr)
+	}
+
+	output, _, err := renderCommand(args[:applyIndex], stdin, environ)
+	if err != nil {
+		return err
+	}
+
+	return kubectlApply(output, stdout, stderr, args[applyIndex+1:])
+}
+
 func runRender(args []string, stdin io.Reader, stdout io.Writer, environ []string) error {
-	fs := flag.NewFlagSet("render", flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
-
-	var filePaths stringSliceFlag
-	fs.Var(&filePaths, "f", "manifest file to render; may be repeated")
-	useDotenv := fs.Bool("env", false, "load variables from .env")
-	envFile := fs.String("env-file", "", "load variables from a specific dotenv file")
-	ignoreProcessEnv := fs.Bool("ignore-process-env", false, "skip reading variables from the process environment")
-	var setValues stringSliceFlag
-	fs.Var(&setValues, "set", "override a variable with KEY=VALUE")
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-	if *useDotenv && *envFile != "" {
-		return errors.New("--env and --env-file cannot be used together")
-	}
-
-	input, err := readInputs(stdin, filePaths)
-	if err != nil {
-		return err
-	}
-
-	vars, err := loadVariables(environ, *useDotenv, *envFile, *ignoreProcessEnv, setValues)
-	if err != nil {
-		return err
-	}
-
-	output, err := render.Strict(input, vars)
+	output, _, err := renderCommand(args, stdin, environ)
 	if err != nil {
 		return err
 	}
@@ -65,9 +78,78 @@ func runRender(args []string, stdin io.Reader, stdout io.Writer, environ []strin
 	return err
 }
 
+func runApply(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
+	output, kubectlArgs, err := renderCommand(args, stdin, environ)
+	if err != nil {
+		return err
+	}
+
+	return kubectlApply(output, stdout, stderr, kubectlArgs)
+}
+
+func renderCommand(args []string, stdin io.Reader, environ []string) ([]byte, []string, error) {
+	options, err := parseRenderOptions(args)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	input, err := readInputs(stdin, options.filePaths)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	vars, err := loadVariables(environ, options.useDotenv, options.envFile, options.ignoreProcessEnv, options.setValues)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	output, err := render.Strict(input, vars)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return output, options.extraArgs, nil
+}
+
 func usage(w io.Writer) error {
-	_, _ = fmt.Fprintln(w, "usage: kubenv <render|version> [flags]")
+	_, _ = fmt.Fprintln(w, "usage: kubenv <render|apply|version> [flags]")
 	return errors.New("invalid command")
+}
+
+func kubectlPluginUsage(w io.Writer) error {
+	_, _ = fmt.Fprintln(w, "usage: kubectl kubenv [kubenv flags] apply [kubectl apply flags]")
+	_, _ = fmt.Fprintln(w, "   or: kubectl kubenv <render|apply|version> [flags]")
+	return errors.New("invalid command")
+}
+
+type renderOptions struct {
+	filePaths        []string
+	useDotenv        bool
+	envFile          string
+	ignoreProcessEnv bool
+	setValues        []string
+	extraArgs        []string
+}
+
+func parseRenderOptions(args []string) (renderOptions, error) {
+	fs := flag.NewFlagSet("render", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+
+	var options renderOptions
+	fs.Var((*stringSliceFlag)(&options.filePaths), "f", "manifest file to render; may be repeated")
+	fs.BoolVar(&options.useDotenv, "dotenv", false, "load variables from .env")
+	fs.StringVar(&options.envFile, "dotenv-file", "", "load variables from a specific dotenv file")
+	fs.BoolVar(&options.ignoreProcessEnv, "ignore-process-env", false, "skip reading variables from the process environment")
+	fs.Var((*stringSliceFlag)(&options.setValues), "set", "override a variable with KEY=VALUE")
+	if err := fs.Parse(args); err != nil {
+		return renderOptions{}, err
+	}
+	if options.useDotenv && options.envFile != "" {
+		return renderOptions{}, errors.New("--env and --env-file cannot be used together")
+	}
+
+	options.extraArgs = fs.Args()
+	return options, nil
 }
 
 func loadVariables(environ []string, useDotenv bool, envFile string, ignoreProcessEnv bool, setValues []string) (map[string]string, error) {
@@ -132,4 +214,22 @@ func (f *stringSliceFlag) String() string {
 func (f *stringSliceFlag) Set(value string) error {
 	*f = append(*f, value)
 	return nil
+}
+
+func isCommand(arg string) bool {
+	switch arg {
+	case "render", "apply", "version":
+		return true
+	default:
+		return false
+	}
+}
+
+func indexOf(items []string, target string) int {
+	for i, item := range items {
+		if item == target {
+			return i
+		}
+	}
+	return -1
 }
