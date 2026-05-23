@@ -24,67 +24,13 @@ var kubectlApply = func(input []byte, stdout, stderr io.Writer, args []string) e
 	return cmd.Run()
 }
 
-// Entry point for the kubenv CLI
-func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
-	if len(args) == 0 {
-		return usage(stderr)
-	}
-
-	switch args[0] {
-	case "render":
-		return runRender(args[1:], stdin, stdout, environ)
-	case "apply":
-		return runApply(args[1:], stdin, stdout, stderr, environ)
-	case "version":
-		_, err := fmt.Fprintln(stdout, "kubenv dev")
-		return err
-	default:
-		return usage(stderr)
-	}
-}
-
-// Entry point for the kubectl plugin
-func RunKubectlPlugin(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
-	if len(args) == 0 {
-		return kubectlPluginUsage(stderr)
-	}
-
-	// If the first argument is a known command, run it directly. Otherwise, look for "apply" to determine if we're in plugin mode.
-	// For example, "kubectl kubenv render -f manifest.yaml" should run the render command
-	if isCommand(args[0]) {
-		return Run(args, stdin, stdout, stderr, environ)
-	}
-
-	applyIndex := indexOf(args, "apply")
-	if applyIndex == -1 {
-		return kubectlPluginUsage(stderr)
-	}
-
-	output, _, err := renderCommand(args[:applyIndex], stdin, environ)
-	if err != nil {
-		return err
-	}
-
-	return kubectlApply(output, stdout, stderr, args[applyIndex+1:])
-}
-
-func runRender(args []string, stdin io.Reader, stdout io.Writer, environ []string) error {
-	output, _, err := renderCommand(args, stdin, environ)
-	if err != nil {
-		return err
-	}
-
-	_, err = stdout.Write(output)
-	return err
-}
-
-func runApply(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
-	output, kubectlArgs, err := renderCommand(args, stdin, environ)
-	if err != nil {
-		return err
-	}
-
-	return kubectlApply(output, stdout, stderr, kubectlArgs)
+type renderOptions struct {
+	filePaths        []string
+	useDotenv        bool
+	envFile          string
+	ignoreProcessEnv bool
+	setValues        []string
+	extraArgs        []string
 }
 
 func renderCommand(args []string, stdin io.Reader, environ []string) ([]byte, []string, error) {
@@ -111,26 +57,6 @@ func renderCommand(args []string, stdin io.Reader, environ []string) ([]byte, []
 	return output, options.extraArgs, nil
 }
 
-func usage(w io.Writer) error {
-	_, _ = fmt.Fprintln(w, "usage: kubenv <render|apply|version> [flags]")
-	return errors.New("invalid command")
-}
-
-func kubectlPluginUsage(w io.Writer) error {
-	_, _ = fmt.Fprintln(w, "usage: kubectl kubenv [kubenv flags] apply [kubectl apply flags]")
-	_, _ = fmt.Fprintln(w, "   or: kubectl kubenv <render|apply|version> [flags]")
-	return errors.New("invalid command")
-}
-
-type renderOptions struct {
-	filePaths        []string
-	useDotenv        bool
-	envFile          string
-	ignoreProcessEnv bool
-	setValues        []string
-	extraArgs        []string
-}
-
 func parseRenderOptions(args []string) (renderOptions, error) {
 	fs := flag.NewFlagSet("render", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -145,7 +71,7 @@ func parseRenderOptions(args []string) (renderOptions, error) {
 		return renderOptions{}, err
 	}
 	if options.useDotenv && options.envFile != "" {
-		return renderOptions{}, errors.New("--env and --env-file cannot be used together")
+		return renderOptions{}, errors.New("--dotenv and --dotenv-file cannot be used together")
 	}
 
 	options.extraArgs = fs.Args()
@@ -214,22 +140,4 @@ func (f *stringSliceFlag) String() string {
 func (f *stringSliceFlag) Set(value string) error {
 	*f = append(*f, value)
 	return nil
-}
-
-func isCommand(arg string) bool {
-	switch arg {
-	case "render", "apply", "version":
-		return true
-	default:
-		return false
-	}
-}
-
-func indexOf(items []string, target string) int {
-	for i, item := range items {
-		if item == target {
-			return i
-		}
-	}
-	return -1
 }

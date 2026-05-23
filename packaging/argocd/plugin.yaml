@@ -8,6 +8,13 @@ spec:
     command: [sh, -c]
     args:
       - find . -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 | xargs -0 cat | kubenv-argocd-cmp
+  parameters:
+    static:
+      - name: vars
+        title: kubenv variables
+        tooltip: Map of variables exposed to {{ env.NAME }} placeholders.
+        collectionType: map
+        map: {}
   discover:
     find:
       command: [sh, -c, "find . -name '.kubenv.yaml' -o -name 'kubenv.yaml' | grep ."]
