@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"strings"
@@ -22,15 +23,6 @@ var kubectlApply = func(input []byte, stdout, stderr io.Writer, args []string) e
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	return cmd.Run()
-}
-
-type renderOptions struct {
-	filePaths        []string
-	useDotenv        bool
-	envFile          string
-	ignoreProcessEnv bool
-	setValues        []string
-	extraArgs        []string
 }
 
 func renderCommand(args []string, stdin io.Reader, environ []string) ([]byte, []string, error) {
@@ -57,6 +49,15 @@ func renderCommand(args []string, stdin io.Reader, environ []string) ([]byte, []
 	return output, options.extraArgs, nil
 }
 
+type renderOptions struct {
+	filePaths        []string
+	useDotenv        bool
+	envFile          string
+	ignoreProcessEnv bool
+	setValues        []string
+	extraArgs        []string
+}
+
 func parseRenderOptions(args []string) (renderOptions, error) {
 	fs := flag.NewFlagSet("render", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
@@ -71,7 +72,7 @@ func parseRenderOptions(args []string) (renderOptions, error) {
 		return renderOptions{}, err
 	}
 	if options.useDotenv && options.envFile != "" {
-		return renderOptions{}, errors.New("--dotenv and --dotenv-file cannot be used together")
+		return renderOptions{}, errors.New("--env and --env-file cannot be used together")
 	}
 
 	options.extraArgs = fs.Args()
@@ -92,15 +93,11 @@ func loadVariables(environ []string, useDotenv bool, envFile string, ignoreProce
 			return nil, err
 		}
 
-		for key, value := range dotenvVars {
-			vars[key] = value
-		}
+		maps.Copy(vars, dotenvVars)
 	}
 
 	if !ignoreProcessEnv {
-		for key, value := range render.FromEnviron(environ) {
-			vars[key] = value
-		}
+		maps.Copy(vars, render.FromEnviron(environ))
 	}
 
 	for _, item := range setValues {

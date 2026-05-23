@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"strings"
 
 	"github.com/dexiotropic/kubenv/internal/render"
@@ -30,29 +31,32 @@ func Run(stdin io.Reader, stdout, _ io.Writer, environ []string) error {
 	return err
 }
 
+// loadVariables processes the environment variables according to the precedence rules defined by Argo CD CMP.
+// For reference, see https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/#using-environment-variables-in-your-plugin
 func loadVariables(environ []string) (map[string]string, error) {
+	// Process environment variables take the lowest precedence
 	vars := render.FromEnviron(environ)
 
+	// Then we include all environment variables with the ARGOCD_ENV_ prefix, stripping the prefix first.
 	for _, entry := range environ {
 		key, value, ok := strings.Cut(entry, "=")
 		if !ok {
 			continue
 		}
 
-		if strings.HasPrefix(key, "ARGOCD_ENV_") {
-			vars[strings.TrimPrefix(key, "ARGOCD_ENV_")] = value
+		// Argo CD injects environment variables with the ARGOCD_ENV_ prefix for each parameter defined in the Application manifest.
+		if after, found := strings.CutPrefix(key, "ARGOCD_ENV_"); found {
+			vars[after] = value
 		}
 	}
 
+	// Finally, we include the ARGOCD_APP_PARAMETERS, which have the highest precedence.
 	parameters, err := loadParameters(environ)
 	if err != nil {
 		return nil, err
 	}
 
-	for key, value := range parameters {
-		vars[key] = value
-	}
-
+	maps.Copy(vars, parameters)
 	return vars, nil
 }
 
@@ -73,9 +77,7 @@ func loadParameters(environ []string) (map[string]string, error) {
 			vars[parameter.Name] = *parameter.String
 		}
 
-		for key, value := range parameter.Map {
-			vars[key] = value
-		}
+		maps.Copy(vars, parameter.Map)
 
 		for index, value := range parameter.Array {
 			vars[fmt.Sprintf("%s_%d", parameter.Name, index)] = value
