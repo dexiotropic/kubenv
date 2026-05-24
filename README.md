@@ -33,6 +33,9 @@ Implementation layout:
 - `docs/`: focused entrypoint documentation
 - `examples/`: sample manifests
 - `packaging/argocd/`: CMP configuration assets
+- `packaging/krew/`: Krew manifest templates
+- `.goreleaser.yaml`: multi-platform release configuration
+- `.github/workflows/`: CI and release automation
 
 ## Start here
 
@@ -51,3 +54,27 @@ For Argo CD CMP integration:
 For internal structure notes:
 
 - [`docs/architecture.md`](docs/architecture.md)
+
+## Release automation
+
+The repository is set up to use:
+
+- **Release Please** for conventional-commit-driven versioning and GitHub releases
+- **GoReleaser** for multi-platform binaries, checksums, and the Argo CD CMP image
+- repo scripts for generating the Homebrew formula and Krew manifest release assets
+
+Release outputs are intended to include:
+
+- `kubenv` archives for Linux, macOS, and Windows
+- `kubectl-env` archives for Linux, macOS, and Windows
+- `kubenv-argocd-cmp` archives for Linux
+- `checksums.txt`
+- a generated Homebrew formula artifact
+- a generated Krew plugin manifest
+- a published `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` image
+
+If you also want the Homebrew tap updated automatically after each published release, set:
+
+- repository variable `HOMEBREW_TAP_REPOSITORY` to the tap repo, for example `dexiotropic/homebrew-tap`
+- optional repository variable `HOMEBREW_TAP_BRANCH` if it is not `main`
+- repository secret `HOMEBREW_TAP_TOKEN` with write access to that tap repository

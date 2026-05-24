@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+
+	"github.com/dexiotropic/kubenv/internal/version"
 )
 
 // Run is the entrypoint for the kubenv CLI.
@@ -18,7 +20,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []str
 	case "apply":
 		return runApply(args[1:], stdin, stdout, stderr, environ)
 	case "version":
-		_, err := fmt.Fprintln(stdout, "kubenv dev")
+		_, err := fmt.Fprintln(stdout, version.String())
 		return err
 	default:
 		return usage(stderr)

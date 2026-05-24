@@ -18,6 +18,8 @@ Make sure the output directory is on `PATH`, then verify:
 kubectl plugin list
 ```
 
+Release automation also generates a Krew manifest release asset named `env.yaml`, which can be submitted to a Krew index repository later.
+
 ## Usage
 
 Primary plugin flow:

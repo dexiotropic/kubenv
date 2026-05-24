@@ -72,7 +72,7 @@ func parseRenderOptions(args []string) (renderOptions, error) {
 		return renderOptions{}, err
 	}
 	if options.useDotenv && options.envFile != "" {
-		return renderOptions{}, errors.New("--env and --env-file cannot be used together")
+		return renderOptions{}, errors.New("--dotenv and --dotenv-file cannot be used together")
 	}
 
 	options.extraArgs = fs.Args()

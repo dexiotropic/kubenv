@@ -1,0 +1,86 @@
+version: 2
+
+project_name: kubenv
+
+before:
+  hooks:
+    - go test ./...
+
+builds:
+  - id: kubenv
+    main: ./cmd/kubenv
+    binary: kubenv
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags: &ldflags
+      - -s -w -X github.com/dexiotropic/kubenv/internal/version.version={{ .Version }} -X github.com/dexiotropic/kubenv/internal/version.commit={{ .Commit }} -X github.com/dexiotropic/kubenv/internal/version.date={{ .Date }}
+
+  - id: kubectl-env
+    main: ./cmd/kubectl-env
+    binary: kubectl-env
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags: *ldflags
+
+  - id: kubenv-argocd-cmp
+    main: ./cmd/kubenv-argocd-cmp
+    binary: kubenv-argocd-cmp
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags: *ldflags
+
+archives:
+  - ids:
+      - kubenv
+      - kubectl-env
+      - kubenv-argocd-cmp
+    name_template: "{{ .ProjectName }}_{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  use: github-native
+
+dockers_v2:
+  - id: kubenv-argocd-cmp
+    ids:
+      - kubenv-argocd-cmp
+    dockerfile: Dockerfile.argocd-cmp
+    images:
+      - ghcr.io/dexiotropic/kubenv-argocd-cmp
+    tags:
+      - "{{ .Tag }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    extra_files:
+      - packaging/argocd/plugin.yaml
