@@ -2,9 +2,7 @@ FROM alpine:3.20
 
 ARG TARGETPLATFORM
 
-RUN addgroup -g 999 argocd \
-    && adduser -D -H -u 999 -G argocd argocd \
-    && mkdir -p /home/argocd/cmp-server/config /home/argocd/cmp-server/plugins /tmp \
+RUN mkdir -p /home/argocd/cmp-server/config /home/argocd/cmp-server/plugins /tmp \
     && chown -R 999:999 /home/argocd /tmp
 
 COPY --chown=999:999 $TARGETPLATFORM/kubenv-argocd-cmp /usr/local/bin/kubenv-argocd-cmp
