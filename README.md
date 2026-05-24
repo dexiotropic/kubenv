@@ -78,3 +78,9 @@ If you also want the Homebrew tap updated automatically after each published rel
 - repository variable `HOMEBREW_TAP_REPOSITORY` to the tap repo, for example `dexiotropic/homebrew-tap`
 - optional repository variable `HOMEBREW_TAP_BRANCH` if it is not `main`
 - repository secret `HOMEBREW_TAP_TOKEN` with write access to that tap repository
+
+Release Please is configured to use an explicit repository secret:
+
+- `RELEASE_PLEASE_TOKEN`
+
+That token needs permission to create branches, commits, tags, releases, and pull requests in the `kubenv` repository. This avoids depending on the repository-level **“Allow GitHub Actions to create and approve pull requests”** setting for the default `GITHUB_TOKEN`.

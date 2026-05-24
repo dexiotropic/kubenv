@@ -67,13 +67,17 @@ jobs:
           fi
 
       - name: Update Homebrew tap
-        if: ${{ vars.HOMEBREW_TAP_REPOSITORY != '' && secrets.HOMEBREW_TAP_TOKEN != '' }}
+        if: ${{ vars.HOMEBREW_TAP_REPOSITORY != '' }}
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           HOMEBREW_TAP_REPOSITORY: ${{ vars.HOMEBREW_TAP_REPOSITORY }}
           HOMEBREW_TAP_BRANCH: ${{ vars.HOMEBREW_TAP_BRANCH }}
         run: |
           set -euo pipefail
+          if [[ -z "${HOMEBREW_TAP_TOKEN:-}" ]]; then
+            echo "HOMEBREW_TAP_TOKEN is not configured; skipping tap update"
+            exit 0
+          fi
           ./scripts/publish-homebrew-formula.sh \
             dist/kubenv.rb \
             kubenv \
