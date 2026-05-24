@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/dexiotropic/kubenv/compare/v0.2.1...v0.2.2) (2026-05-24)
+
+
+### Bug Fixes
+
+* **dev:** publish to brew taps repo ([e29aadb](https://github.com/dexiotropic/kubenv/commit/e29aadb2f4bdb2bd4cdd344dc121b6e2fe1bb546))
+
 ## [0.2.1](https://github.com/dexiotropic/kubenv/compare/v0.2.0...v0.2.1) (2026-05-24)
 
 
