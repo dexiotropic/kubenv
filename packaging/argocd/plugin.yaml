@@ -3,11 +3,15 @@ kind: ConfigManagementPlugin
 metadata:
   name: kubenv
 spec:
-  version: v0.1.0
+  version: 0.2.0
   generate:
-    command: [sh, -c]
+    command:
+      - sh
+      - '-c'
     args:
-      - find . -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 | xargs -0 cat | kubenv-argocd-cmp
+      - >-
+        find . -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 | xargs -0
+        cat | kubenv-argocd-cmp
   parameters:
     static:
       - name: vars
@@ -17,4 +21,7 @@ spec:
         map: {}
   discover:
     find:
-      command: [sh, -c, "find . -name '.kubenv.yaml' -o -name 'kubenv.yaml' | grep ."]
+      command:
+        - sh
+        - '-c'
+        - find . -name '.kubenv.yaml' -o -name 'kubenv.yaml' | grep .
