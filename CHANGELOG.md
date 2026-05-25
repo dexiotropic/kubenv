@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/dexiotropic/kubenv/compare/v0.3.1...v0.3.2) (2026-05-25)
+
+
+### Bug Fixes
+
+* **argocd:** plugin versioned and latest variants ([c007396](https://github.com/dexiotropic/kubenv/commit/c0073968667ddc75faa24e625fe3b0e6bfd8dab1))
+
 ## [0.3.1](https://github.com/dexiotropic/kubenv/compare/v0.3.0...v0.3.1) (2026-05-25)
 
 
