@@ -8,6 +8,7 @@ import (
 func TestRunUsesCMPStringParameters(t *testing.T) {
 	var stdout bytes.Buffer
 	err := Run(
+		nil,
 		bytes.NewBufferString("msg: {{ env.GREETING }}\n"),
 		&stdout,
 		bytes.NewBuffer(nil),
@@ -25,6 +26,7 @@ func TestRunUsesCMPStringParameters(t *testing.T) {
 func TestRunUsesCMPMapParameters(t *testing.T) {
 	var stdout bytes.Buffer
 	err := Run(
+		nil,
 		bytes.NewBufferString("msg: {{ env.GREETING }} {{ env.NAME }}\n"),
 		&stdout,
 		bytes.NewBuffer(nil),
@@ -42,6 +44,7 @@ func TestRunUsesCMPMapParameters(t *testing.T) {
 func TestRunCMPParametersOverrideProcessEnv(t *testing.T) {
 	var stdout bytes.Buffer
 	err := Run(
+		nil,
 		bytes.NewBufferString("msg: {{ env.GREETING }}\n"),
 		&stdout,
 		bytes.NewBuffer(nil),
@@ -62,6 +65,7 @@ func TestRunCMPParametersOverrideProcessEnv(t *testing.T) {
 func TestRunUsesPrefixedPluginEnv(t *testing.T) {
 	var stdout bytes.Buffer
 	err := Run(
+		nil,
 		bytes.NewBufferString("msg: {{ env.GREETING }}\n"),
 		&stdout,
 		bytes.NewBuffer(nil),
@@ -78,6 +82,7 @@ func TestRunUsesPrefixedPluginEnv(t *testing.T) {
 
 func TestRunFailsOnInvalidCMPParameters(t *testing.T) {
 	err := Run(
+		nil,
 		bytes.NewBufferString("msg: {{ env.GREETING }}\n"),
 		bytes.NewBuffer(nil),
 		bytes.NewBuffer(nil),
@@ -85,5 +90,22 @@ func TestRunFailsOnInvalidCMPParameters(t *testing.T) {
 	)
 	if err == nil {
 		t.Fatal("expected error")
+	}
+}
+
+func TestRunShowsHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := Run([]string{"--help"}, bytes.NewBuffer(nil), &stdout, &stderr, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); !bytes.Contains([]byte(got), []byte("ARGOCD_APP_PARAMETERS")) {
+		t.Fatalf("unexpected help output: %q", got)
+	}
+	if got := stderr.String(); got != "" {
+		t.Fatalf("unexpected stderr: %q", got)
 	}
 }

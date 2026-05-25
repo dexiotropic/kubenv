@@ -3,7 +3,6 @@ package cli
 import (
 	"bytes"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"maps"
@@ -12,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/dexiotropic/kubenv/internal/render"
+	ucli "github.com/urfave/cli/v3"
 )
 
 var kubectlApply = func(input []byte, stdout, stderr io.Writer, args []string) error {
@@ -25,30 +25,6 @@ var kubectlApply = func(input []byte, stdout, stderr io.Writer, args []string) e
 	return cmd.Run()
 }
 
-func renderCommand(args []string, stdin io.Reader, environ []string) ([]byte, []string, error) {
-	options, err := parseRenderOptions(args)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	input, err := readInputs(stdin, options.filePaths)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	vars, err := loadVariables(environ, options.useDotenv, options.envFile, options.ignoreProcessEnv, options.setValues)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	output, err := render.Strict(input, vars)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return output, options.extraArgs, nil
-}
-
 type renderOptions struct {
 	filePaths        []string
 	useDotenv        bool
@@ -58,25 +34,61 @@ type renderOptions struct {
 	extraArgs        []string
 }
 
-func parseRenderOptions(args []string) (renderOptions, error) {
-	fs := flag.NewFlagSet("render", flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
-
-	var options renderOptions
-	fs.Var((*stringSliceFlag)(&options.filePaths), "f", "manifest file to render; may be repeated")
-	fs.BoolVar(&options.useDotenv, "dotenv", false, "load variables from .env")
-	fs.StringVar(&options.envFile, "dotenv-file", "", "load variables from a specific dotenv file")
-	fs.BoolVar(&options.ignoreProcessEnv, "ignore-process-env", false, "skip reading variables from the process environment")
-	fs.Var((*stringSliceFlag)(&options.setValues), "set", "override a variable with KEY=VALUE")
-	if err := fs.Parse(args); err != nil {
-		return renderOptions{}, err
+func renderFlags() []ucli.Flag {
+	return []ucli.Flag{
+		&ucli.StringSliceFlag{
+			Name:    "file",
+			Aliases: []string{"f"},
+			Usage:   "manifest file to render; may be repeated",
+		},
+		&ucli.BoolFlag{
+			Name:  "dotenv",
+			Usage: "load variables from .env",
+		},
+		&ucli.StringFlag{
+			Name:  "dotenv-file",
+			Usage: "load variables from a specific dotenv file",
+		},
+		&ucli.BoolFlag{
+			Name:  "ignore-process-env",
+			Usage: "skip reading variables from the process environment",
+		},
+		&ucli.StringSliceFlag{
+			Name:  "set",
+			Usage: "override a variable with KEY=VALUE",
+		},
 	}
+}
+
+func renderOptionsFromCommand(cmd *ucli.Command) (renderOptions, error) {
+	options := renderOptions{
+		filePaths:        cmd.StringSlice("file"),
+		useDotenv:        cmd.Bool("dotenv"),
+		envFile:          cmd.String("dotenv-file"),
+		ignoreProcessEnv: cmd.Bool("ignore-process-env"),
+		setValues:        cmd.StringSlice("set"),
+		extraArgs:        cmd.Args().Slice(),
+	}
+
 	if options.useDotenv && options.envFile != "" {
 		return renderOptions{}, errors.New("--dotenv and --dotenv-file cannot be used together")
 	}
 
-	options.extraArgs = fs.Args()
 	return options, nil
+}
+
+func renderWithOptions(options renderOptions, stdin io.Reader, environ []string) ([]byte, error) {
+	input, err := readInputs(stdin, options.filePaths)
+	if err != nil {
+		return nil, err
+	}
+
+	vars, err := loadVariables(environ, options.useDotenv, options.envFile, options.ignoreProcessEnv, options.setValues)
+	if err != nil {
+		return nil, err
+	}
+
+	return render.Strict(input, vars)
 }
 
 func loadVariables(environ []string, useDotenv bool, envFile string, ignoreProcessEnv bool, setValues []string) (map[string]string, error) {
@@ -126,15 +138,4 @@ func readInputs(stdin io.Reader, filePaths []string) ([]byte, error) {
 	}
 
 	return bytes.Join(documents, []byte("\n---\n")), nil
-}
-
-type stringSliceFlag []string
-
-func (f *stringSliceFlag) String() string {
-	return strings.Join(*f, ",")
-}
-
-func (f *stringSliceFlag) Set(value string) error {
-	*f = append(*f, value)
-	return nil
 }

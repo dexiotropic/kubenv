@@ -1,6 +1,7 @@
 package cmp
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,33 +9,51 @@ import (
 	"strings"
 
 	"github.com/dexiotropic/kubenv/internal/render"
+	"github.com/dexiotropic/kubenv/internal/version"
+	ucli "github.com/urfave/cli/v3"
 )
 
 // Run is the entrypoint for the Argo CD CMP binary.
-func Run(stdin io.Reader, stdout, _ io.Writer, environ []string) error {
-	input, err := io.ReadAll(stdin)
-	if err != nil {
-		return err
+func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
+	command := &ucli.Command{
+		Name:        "kubenv-argocd-cmp",
+		Usage:       "Render manifests for Argo CD Config Management Plugins",
+		Description: "Reads manifests from stdin and resolves values from ARGOCD_APP_PARAMETERS, ARGOCD_ENV_* and the remaining process environment.",
+		Version:     version.String(),
+		Reader:      stdin,
+		Writer:      stdout,
+		ErrWriter:   stderr,
+		OnUsageError: func(_ context.Context, _ *ucli.Command, err error, _ bool) error {
+			return err
+		},
+		Action: func(_ context.Context, _ *ucli.Command) error {
+			input, err := io.ReadAll(stdin)
+			if err != nil {
+				return err
+			}
+
+			vars, err := loadVariables(environ)
+			if err != nil {
+				return err
+			}
+
+			output, err := render.Strict(input, vars)
+			if err != nil {
+				return err
+			}
+
+			_, err = stdout.Write(output)
+			return err
+		},
 	}
 
-	vars, err := loadVariables(environ)
-	if err != nil {
-		return err
-	}
-
-	output, err := render.Strict(input, vars)
-	if err != nil {
-		return err
-	}
-
-	_, err = stdout.Write(output)
-	return err
+	return command.Run(context.Background(), append([]string{"kubenv-argocd-cmp"}, args...))
 }
 
 // loadVariables processes the environment variables according to the precedence rules defined by Argo CD CMP.
 // For reference, see https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/#using-environment-variables-in-your-plugin
 func loadVariables(environ []string) (map[string]string, error) {
-	// Process environment variables take the lowest precedence
+	// Process environment variables take the lowest precedence.
 	vars := render.FromEnviron(environ)
 
 	// Then we include all environment variables with the ARGOCD_ENV_ prefix, stripping the prefix first.

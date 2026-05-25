@@ -9,6 +9,57 @@ import (
 	"testing"
 )
 
+func TestRunShowsHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := Run([]string{"--help"}, strings.NewReader(""), &stdout, &stderr, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	assertContains(t, stdout.String(), "render")
+	assertContains(t, stdout.String(), "apply")
+	assertContains(t, stdout.String(), "version")
+	if got := stderr.String(); got != "" {
+		t.Fatalf("unexpected stderr: %q", got)
+	}
+}
+
+func TestRunRenderShowsHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := Run([]string{"render", "--help"}, strings.NewReader(""), &stdout, &stderr, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	assertContains(t, stdout.String(), "--dotenv")
+	assertContains(t, stdout.String(), "--dotenv-file")
+	assertContains(t, stdout.String(), "--set")
+	if got := stderr.String(); got != "" {
+		t.Fatalf("unexpected stderr: %q", got)
+	}
+}
+
+func TestRunKubectlPluginShowsHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := RunKubectlPlugin([]string{"--help"}, strings.NewReader(""), &stdout, &stderr, nil)
+	if err != nil {
+		t.Fatalf("RunKubectlPlugin returned error: %v", err)
+	}
+
+	assertContains(t, stdout.String(), "kubectl env [kubenv flags] apply [kubectl apply flags]")
+	assertContains(t, stdout.String(), "render")
+	assertContains(t, stdout.String(), "apply")
+	if got := stderr.String(); got != "" {
+		t.Fatalf("unexpected stderr: %q", got)
+	}
+}
+
 func TestRunRenderLoadsDefaultDotenv(t *testing.T) {
 	t.Setenv("GREETING", "")
 	dir := t.TempDir()
@@ -302,4 +353,11 @@ type ioDiscard struct{}
 
 func (ioDiscard) Write(p []byte) (int, error) {
 	return len(p), nil
+}
+
+func assertContains(t *testing.T, got, want string) {
+	t.Helper()
+	if !strings.Contains(got, want) {
+		t.Fatalf("expected %q to contain %q", got, want)
+	}
 }

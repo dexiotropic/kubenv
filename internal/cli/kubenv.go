@@ -1,52 +1,91 @@
 package cli
 
 import (
-	"errors"
+	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/dexiotropic/kubenv/internal/version"
+	ucli "github.com/urfave/cli/v3"
 )
 
 // Run is the entrypoint for the kubenv CLI.
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
-	if len(args) == 0 {
-		return usage(stderr)
-	}
+	command := newKubenvCommand(stdin, stdout, stderr, environ)
+	return command.Run(context.Background(), append([]string{"kubenv"}, args...))
+}
 
-	switch args[0] {
-	case "render":
-		return runRender(args[1:], stdin, stdout, environ)
-	case "apply":
-		return runApply(args[1:], stdin, stdout, stderr, environ)
-	case "version":
-		_, err := fmt.Fprintln(stdout, version.String())
-		return err
-	default:
-		return usage(stderr)
+func newKubenvCommand(stdin io.Reader, stdout, stderr io.Writer, environ []string) *ucli.Command {
+	return &ucli.Command{
+		Name:        "kubenv",
+		Usage:       "Render Kubernetes manifests with strict variable substitution",
+		Description: "kubenv renders manifests with strict {{ env.NAME }} substitution.",
+		Version:     version.String(),
+		Reader:      stdin,
+		Writer:      stdout,
+		ErrWriter:   stderr,
+		OnUsageError: func(_ context.Context, _ *ucli.Command, err error, _ bool) error {
+			return err
+		},
+		Action: func(_ context.Context, cmd *ucli.Command) error {
+			return ucli.ShowRootCommandHelp(cmd)
+		},
+		Commands: []*ucli.Command{
+			{
+				Name:      "render",
+				Usage:     "Render manifests to stdout",
+				UsageText: "kubenv render [flags]",
+				Flags:     renderFlags(),
+				Action: func(_ context.Context, cmd *ucli.Command) error {
+					options, err := renderOptionsFromCommand(cmd)
+					if err != nil {
+						return err
+					}
+					if len(options.extraArgs) != 0 {
+						return fmt.Errorf("render does not accept positional arguments: %s", stringsJoin(options.extraArgs))
+					}
+
+					output, err := renderWithOptions(options, stdin, environ)
+					if err != nil {
+						return err
+					}
+
+					_, err = stdout.Write(output)
+					return err
+				},
+			},
+			{
+				Name:      "apply",
+				Usage:     "Render manifests and run kubectl apply -f -",
+				UsageText: "kubenv apply [flags] -- [kubectl apply flags]",
+				Flags:     renderFlags(),
+				Action: func(_ context.Context, cmd *ucli.Command) error {
+					options, err := renderOptionsFromCommand(cmd)
+					if err != nil {
+						return err
+					}
+
+					output, err := renderWithOptions(options, stdin, environ)
+					if err != nil {
+						return err
+					}
+
+					return kubectlApply(output, stdout, stderr, options.extraArgs)
+				},
+			},
+			{
+				Name:  "version",
+				Usage: "Print version information",
+				Action: func(_ context.Context, _ *ucli.Command) error {
+					_, err := fmt.Fprintln(stdout, version.String())
+					return err
+				},
+			},
+		},
 	}
 }
 
-func runRender(args []string, stdin io.Reader, stdout io.Writer, environ []string) error {
-	output, _, err := renderCommand(args, stdin, environ)
-	if err != nil {
-		return err
-	}
-
-	_, err = stdout.Write(output)
-	return err
-}
-
-func runApply(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
-	output, kubectlArgs, err := renderCommand(args, stdin, environ)
-	if err != nil {
-		return err
-	}
-
-	return kubectlApply(output, stdout, stderr, kubectlArgs)
-}
-
-func usage(w io.Writer) error {
-	_, _ = fmt.Fprintln(w, "usage: kubenv <render|apply|version> [flags]")
-	return errors.New("invalid command")
+func stringsJoin(values []string) string {
+	return strings.Join(values, " ")
 }
