@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/dexiotropic/kubenv/compare/v0.2.2...v0.3.0) (2026-05-25)
+
+
+### Features
+
+* **cli:** improve cli usage and commands development ([0f063d4](https://github.com/dexiotropic/kubenv/commit/0f063d4fed57ccb4a22db791127fe88c0aaf6c1d))
+* **vars:** add shell-style variables support ([0c975ac](https://github.com/dexiotropic/kubenv/commit/0c975ac6e7601fd58ea0439280fd9f2beada20e4))
+
+
+### Bug Fixes
+
+* **docs:** update docs and improve packaging definitions ([993ba0e](https://github.com/dexiotropic/kubenv/commit/993ba0e8edea4f281149d38a43c9d230ff7b484b))
+
 ## [0.2.2](https://github.com/dexiotropic/kubenv/compare/v0.2.1...v0.2.2) (2026-05-24)
 
 
