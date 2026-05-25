@@ -3,6 +3,8 @@ package cli
 import (
 	"bytes"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,6 +39,7 @@ func TestRunRenderShowsHelp(t *testing.T) {
 
 	assertContains(t, stdout.String(), "--dotenv")
 	assertContains(t, stdout.String(), "--dotenv-file")
+	assertContains(t, stdout.String(), "--shell-style")
 	assertContains(t, stdout.String(), "--set")
 	if got := stderr.String(); got != "" {
 		t.Fatalf("unexpected stderr: %q", got)
@@ -103,6 +106,24 @@ func TestRunRenderLoadsCustomEnvFile(t *testing.T) {
 	}
 }
 
+func TestRunRenderSupportsShellStylePlaceholders(t *testing.T) {
+	var stdout bytes.Buffer
+	err := Run(
+		[]string{"render", "--shell-style", "--set", "GREETING=hello", "--set", "TARGET=world"},
+		strings.NewReader("msg: $GREETING ${TARGET}\n"),
+		&stdout,
+		ioDiscard{},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); got != "msg: hello world\n" {
+		t.Fatalf("unexpected output: %q", got)
+	}
+}
+
 func TestRunRenderPrecedenceCLIThenProcessThenFile(t *testing.T) {
 	dir := t.TempDir()
 	envPath := filepath.Join(dir, ".env.dev")
@@ -145,6 +166,110 @@ func TestRunRenderCanReadMultipleFiles(t *testing.T) {
 	}
 
 	if got := stdout.String(); got != "first: hello\n\n---\nsecond: world\n" {
+		t.Fatalf("unexpected output: %q", got)
+	}
+}
+
+func TestRunRenderCanReadDirectory(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "first.yaml"), "first: {{ env.GREETING }}\n")
+	writeFile(t, filepath.Join(dir, "second.json"), "{\"second\":\"{{ env.NAME }}\"}\n")
+	writeFile(t, filepath.Join(dir, "ignore.txt"), "ignored")
+	subdir := filepath.Join(dir, "nested")
+	if err := os.Mkdir(subdir, 0o755); err != nil {
+		t.Fatalf("Mkdir: %v", err)
+	}
+	writeFile(t, filepath.Join(subdir, "third.yaml"), "third: {{ env.EXTRA }}\n")
+
+	var stdout bytes.Buffer
+	err := Run(
+		[]string{"render", "-f", dir},
+		strings.NewReader(""),
+		&stdout,
+		ioDiscard{},
+		[]string{"GREETING=hello", "NAME=world", "EXTRA=ignored"},
+	)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); got != "first: hello\n\n---\n{\"second\":\"world\"}\n" {
+		t.Fatalf("unexpected output: %q", got)
+	}
+}
+
+func TestRunRenderCanReadDirectoryRecursively(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "first.yaml"), "first: {{ env.GREETING }}\n")
+	subdir := filepath.Join(dir, "nested")
+	if err := os.Mkdir(subdir, 0o755); err != nil {
+		t.Fatalf("Mkdir: %v", err)
+	}
+	writeFile(t, filepath.Join(subdir, "second.yaml"), "second: {{ env.NAME }}\n")
+
+	var stdout bytes.Buffer
+	err := Run(
+		[]string{"render", "-f", dir, "--recursive"},
+		strings.NewReader(""),
+		&stdout,
+		ioDiscard{},
+		[]string{"GREETING=hello", "NAME=world"},
+	)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); got != "first: hello\n\n---\nsecond: world\n" {
+		t.Fatalf("unexpected output: %q", got)
+	}
+}
+
+func TestRunRenderCanExpandGlobPatterns(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "a.yaml"), "a: {{ env.FIRST }}\n")
+	writeFile(t, filepath.Join(dir, "b.yaml"), "b: {{ env.SECOND }}\n")
+	writeFile(t, filepath.Join(dir, "c.txt"), "ignored")
+
+	var stdout bytes.Buffer
+	err := Run(
+		[]string{"render", "-f", filepath.Join(dir, "*.yaml")},
+		strings.NewReader(""),
+		&stdout,
+		ioDiscard{},
+		[]string{"FIRST=hello", "SECOND=world"},
+	)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); got != "a: hello\n\n---\nb: world\n" {
+		t.Fatalf("unexpected output: %q", got)
+	}
+}
+
+func TestRunRenderCanReadRemoteURL(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/manifest.yaml" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = io.WriteString(w, "msg: {{ env.GREETING }}\n")
+	}))
+	t.Cleanup(server.Close)
+
+	var stdout bytes.Buffer
+	err := Run(
+		[]string{"render", "-f", server.URL + "/manifest.yaml"},
+		strings.NewReader(""),
+		&stdout,
+		ioDiscard{},
+		[]string{"GREETING=hello"},
+	)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); got != "msg: hello\n" {
 		t.Fatalf("unexpected output: %q", got)
 	}
 }
@@ -283,6 +408,76 @@ func TestRunKubectlPluginSupportsFlagsBeforeApply(t *testing.T) {
 	expected := []string{"--namespace", "demo"}
 	if strings.Join(gotArgs, ",") != strings.Join(expected, ",") {
 		t.Fatalf("unexpected kubectl args: %v", gotArgs)
+	}
+}
+
+func TestRunKubectlPluginSupportsRecursiveDirectoriesBeforeApply(t *testing.T) {
+	original := kubectlApply
+	t.Cleanup(func() {
+		kubectlApply = original
+	})
+
+	var gotInput []byte
+	var gotArgs []string
+	kubectlApply = func(input []byte, _, _ io.Writer, args []string) error {
+		gotInput = append([]byte(nil), input...)
+		gotArgs = append([]string(nil), args...)
+		return nil
+	}
+
+	dir := t.TempDir()
+	writeFile(t, filepath.Join(dir, "first.yaml"), "first: {{ env.GREETING }}\n")
+	subdir := filepath.Join(dir, "nested")
+	if err := os.Mkdir(subdir, 0o755); err != nil {
+		t.Fatalf("Mkdir: %v", err)
+	}
+	writeFile(t, filepath.Join(subdir, "second.yaml"), "second: {{ env.NAME }}\n")
+
+	err := RunKubectlPlugin(
+		[]string{"-f", dir, "--recursive", "apply", "--namespace", "demo"},
+		strings.NewReader(""),
+		ioDiscard{},
+		ioDiscard{},
+		[]string{"GREETING=hello", "NAME=world"},
+	)
+	if err != nil {
+		t.Fatalf("RunKubectlPlugin returned error: %v", err)
+	}
+
+	if got := string(gotInput); got != "first: hello\n\n---\nsecond: world\n" {
+		t.Fatalf("unexpected kubectl stdin: %q", got)
+	}
+	expected := []string{"--namespace", "demo"}
+	if strings.Join(gotArgs, ",") != strings.Join(expected, ",") {
+		t.Fatalf("unexpected kubectl args: %v", gotArgs)
+	}
+}
+
+func TestRunKubectlPluginSupportsShellStyleBeforeApply(t *testing.T) {
+	original := kubectlApply
+	t.Cleanup(func() {
+		kubectlApply = original
+	})
+
+	var gotInput []byte
+	kubectlApply = func(input []byte, _, _ io.Writer, _ []string) error {
+		gotInput = append([]byte(nil), input...)
+		return nil
+	}
+
+	err := RunKubectlPlugin(
+		[]string{"--shell-style", "--set", "GREETING=hello", "apply"},
+		strings.NewReader("msg: $GREETING\n"),
+		ioDiscard{},
+		ioDiscard{},
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("RunKubectlPlugin returned error: %v", err)
+	}
+
+	if got := string(gotInput); got != "msg: hello\n" {
+		t.Fatalf("unexpected kubectl stdin: %q", got)
 	}
 }
 

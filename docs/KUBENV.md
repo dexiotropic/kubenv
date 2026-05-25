@@ -2,6 +2,8 @@
 
 Use the `kubenv` binary when you want to render manifests locally with strict `{{ env.NAME }}` substitution.
 
+That explicit placeholder style is the default. If you already have manifests written with shell-style placeholders, you can switch to `$VAR` / `${VAR}` rendering with `--shell-style`.
+
 ## Installation
 
 ### Brew
@@ -36,6 +38,10 @@ kubenv render -f examples/configmap.yaml
 kubenv render --dotenv -f examples/configmap.yaml
 kubenv render --dotenv-file .env.dev --set NAME=world -f examples/configmap.yaml
 kubenv render -f first.yaml -f second.yaml
+kubenv render -f manifests/ --recursive
+kubenv render -f 'manifests/*.yaml'
+kubenv render -f https://example.com/manifest.yaml
+kubenv render --shell-style --set IMAGE_TAG=1.2.3 -f deployment.yaml
 ```
 
 ### Apply
@@ -66,5 +72,9 @@ Keep in mind:
 - `--dotenv-file <path>` loads a specific dotenv file
 - `--ignore-process-env` disables process environment loading
 - `--dotenv` and `--dotenv-file` are mutually exclusive
-- `-f` may be repeated and files are rendered in the order provided
+- `-f` may be repeated and inputs are rendered in the order provided
+- `-f` accepts files, directories, glob patterns, and `http` / `https` URLs
+- directories include `.yaml`, `.yml`, and `.json` files
+- `--recursive` (or `-R`) walks directory inputs recursively
+- `--shell-style` switches placeholder parsing from `{{ env.NAME }}` to `$NAME` / `${NAME}`
 - dotenv parsing is intentionally minimal: blank lines and `#` comments are supported, and variable lines must be `KEY=VALUE`

@@ -5,8 +5,18 @@ import (
 	"regexp"
 )
 
+type Style string
+
+const (
+	StyleExplicit Style = "explicit"
+	StyleShell    Style = "shell"
+)
+
 // Match variables in the form of {{ env.VAR_NAME }}
-var variablePattern = regexp.MustCompile(`\{\{\s*env\.([A-Z_][A-Z0-9_]*)\s*\}\}`)
+var explicitVariablePattern = regexp.MustCompile(`\{\{\s*env\.([A-Z_][A-Z0-9_]*)\s*\}\}`)
+
+// Match variables in the form of $VAR or ${VAR}
+var shellVariablePattern = regexp.MustCompile(`\$\{?([a-zA-Z_][a-zA-Z0-9_]*)\}?`)
 
 func FromEnviron(environ []string) map[string]string {
 	vars := make(map[string]string, len(environ))
@@ -21,13 +31,25 @@ func FromEnviron(environ []string) map[string]string {
 }
 
 func Strict(input []byte, vars map[string]string) ([]byte, error) {
+	return StrictWithStyle(input, vars, StyleExplicit)
+}
+
+func StrictWithStyle(input []byte, vars map[string]string, style Style) ([]byte, error) {
+	pattern := explicitVariablePattern
+	switch style {
+	case StyleExplicit:
+		pattern = explicitVariablePattern
+	case StyleShell:
+		pattern = shellVariablePattern
+	default:
+		return nil, fmt.Errorf("unknown render style: %s", style)
+	}
+
 	missing := map[string]struct{}{}
-	output := variablePattern.ReplaceAllStringFunc(string(input), func(match string) string {
-		// Get matching group, which is the variable name without the "env." prefix
-		submatches := variablePattern.FindStringSubmatch(match)
+	output := pattern.ReplaceAllStringFunc(string(input), func(match string) string {
+		submatches := pattern.FindStringSubmatch(match)
 
 		if len(submatches) < 2 {
-			// This should not happen, but just in case, return the original match
 			return match
 		}
 

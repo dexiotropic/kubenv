@@ -20,6 +20,8 @@ kubectl plugin list
 
 Release automation also generates a Krew manifest release asset named `env.yaml`, which you can use when submitting the plugin to a Krew index repository.
 
+The default placeholder style is still `{{ env.NAME }}`. If you need compatibility with existing shell-style manifests, add `--shell-style` before `apply` or before the direct `render` / `apply` subcommand.
+
 You can inspect plugin help directly:
 
 ```sh
@@ -32,11 +34,8 @@ kubectl env apply --help
 
 [`hashmap-kz/kubectl-envsubst`](https://github.com/hashmap-kz/kubectl-envsubst) is the closest existing plugin in this space, but the trade-offs are different.
 
-`kubectl-envsubst` currently supports several apply-oriented features that `kubenv` does not:
+`kubectl-envsubst` still supports one notable capability that `kubenv` does not:
 
-- directory inputs with optional recursive traversal
-- glob expansion
-- remote `-f https://...` manifests
 - allow-list and prefix-based filtering over `$VAR` / `${VAR}` placeholders
 
 `kubenv` makes the opposite trade:
@@ -44,6 +43,8 @@ kubectl env apply --help
 - it uses explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
 - it shares the same render behavior across `kubenv`, `kubectl env`, and Argo CD CMP
 - it supports dotenv files and explicit `--set` overrides in addition to process env
+- it supports files, directories, glob patterns, recursive directory traversal, stdin, and remote `-f https://...` manifests
+- it can also opt into `$VAR` / `${VAR}` rendering with `--shell-style` when you need that compatibility
 
 So if you are working with existing `${VAR}` manifests and want behavior close to a stricter `kubectl apply` wrapper, `kubectl-envsubst` may be a better fit today. If you want explicit placeholders and consistent behavior across local and GitOps entrypoints, `kubenv` is the better fit.
 
@@ -53,6 +54,10 @@ The main plugin flow is:
 
 ```sh
 kubectl env --dotenv -f examples/configmap.yaml apply --namespace default
+kubectl env -f manifests/ --recursive apply --namespace default
+kubectl env -f 'manifests/*.yaml' apply --dry-run=client -o yaml
+kubectl env -f https://example.com/manifest.yaml apply --namespace default
+kubectl env --shell-style --set IMAGE_TAG=1.2.3 -f deployment.yaml apply --namespace default
 ```
 
 This syntax splits arguments like this:
@@ -65,6 +70,8 @@ Direct subcommands also work:
 ```sh
 kubectl env render --dotenv -f examples/configmap.yaml
 kubectl env apply --dotenv -f examples/configmap.yaml -- --namespace default
+kubectl env render -f manifests/ --recursive
+kubectl env render --shell-style -f deployment.yaml
 ```
 
 > [!IMPORTANT]

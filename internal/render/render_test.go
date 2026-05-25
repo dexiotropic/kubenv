@@ -23,3 +23,25 @@ func TestStrictFailsOnMissingVariables(t *testing.T) {
 		t.Fatal("expected missing variable error")
 	}
 }
+
+func TestStrictWithShellStyleReplacesVariables(t *testing.T) {
+	input := []byte("message: $GREETING ${TARGET}\n")
+	output, err := StrictWithStyle(input, map[string]string{
+		"GREETING": "hello",
+		"TARGET":   "world",
+	}, StyleShell)
+	if err != nil {
+		t.Fatalf("StrictWithStyle returned error: %v", err)
+	}
+
+	if !bytes.Equal(output, []byte("message: hello world\n")) {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestStrictWithShellStyleFailsOnMissingVariables(t *testing.T) {
+	_, err := StrictWithStyle([]byte("message: $GREETING\n"), map[string]string{}, StyleShell)
+	if err == nil {
+		t.Fatal("expected missing variable error")
+	}
+}
