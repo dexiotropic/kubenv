@@ -10,78 +10,84 @@ Release automation publishes:
 
 - a `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` sidecar image
 - a moving `ghcr.io/dexiotropic/kubenv-argocd-cmp:latest` sidecar image
-- a `kubenv-argocd-plugin.yaml` release asset generated from `packaging/argocd/plugin.yaml`
+- a `kubenv-argocd-plugin.yaml` release asset for the unversioned `latest` plugin name
+- a `kubenv-argocd-plugin-versioned.yaml` release asset that matches the published release tag
 
-## Which installation model this project uses
 
-Argo CD CMP still works by adding a **sidecar container** to `argocd-repo-server`.
+## Installation
 
-There are two common ways to do that:
+The installation process changes based on your Argo CD management and deployment model, however all these methods involve adding a sidecar container to `argocd-repo-server` that runs the published image. Because `plugin.yaml` is baked into the image, you do **not** need a separate ConfigMap mount for it unless you want to override the baked configuration.
 
-1. use a mostly stock sidecar image and mount `plugin.yaml` from a ConfigMap
-2. publish a **custom sidecar image** that already contains the plugin binary and `plugin.yaml`
+> [!TIP]
+> If you prefer automatic sidecar updates, use `:latest` in the next examples. If you prefer reproducible deployments, pin a specific release tag such as `:v0.2.1`. You can find these tags on the [GitHub Container Registry page for this project](https://github.com/dexiotropic/kubenv/pkgs/container/kubenv-argocd-cmp).
 
-This project uses **option 2**.
+> [!IMPORTANT]
+> When you use `:latest`, the baked plugin config does **not** set `spec.version`, so your Argo CD applications should use:
+> 
+> - `spec.source.plugin.name: kubenv`
+> 
+> When you use a pinned sidecar image such as `:v0.3.0`, the baked plugin config sets `spec.version: v0.3.0`, so your Argo CD applications should use:
+> 
+> - `spec.source.plugin.name: kubenv-v0.3.0`
+>
 
-That means the published artifact is:
+### Argo CD Operator
 
-- a sidecar image that already contains:
-  - `kubenv-argocd-cmp`
-  - `plugin.yaml` at `/home/argocd/cmp-server/config/plugin.yaml`
-  - the correct sidecar entrypoint pointing at `/var/run/argocd/argocd-cmp-server`
-
-What is **not** automatic is installation into a live Argo CD instance. You still need to patch `argocd-repo-server` (or the Helm/operator values that manage it) to run that sidecar image.
-
-So, in short:
-
-- **publish** = build and publish the ready-to-use sidecar image
-- **install** = add that sidecar to `argocd-repo-server`
-
-The stock-image path is still possible, but it is not the model this project is targeting.
-
-## Sidecar installation requirements
-
-The published image is intentionally small. It does **not** bundle `argocd-cmp-server`; instead it expects Argo CD to provide that binary through the standard shared mount at:
-
-- `/var/run/argocd`
-
-That means a working installation must mount the same core paths Argo CD documents for CMP sidecars:
-
-- `/var/run/argocd`
-- `/home/argocd/cmp-server/plugins`
-- `/tmp`
-
-The container should also run as:
-
-- `runAsNonRoot: true`
-- `runAsUser: 999`
-
-Because `plugin.yaml` is baked into the image, you do **not** need a separate ConfigMap mount for it unless you want to override the baked configuration.
-
-## Example sidecar patch
-
-The exact patch depends on how you manage Argo CD, but your sidecar should look roughly like this:
+If you manage Argo CD with the Operator, you can add the sidecar to your `ArgoCD` custom resource definition:
 
 ```yaml
-containers:
-  - name: kubenv-cmp
-    image: ghcr.io/dexiotropic/kubenv-argocd-cmp:latest
-    command: ["/var/run/argocd/argocd-cmp-server"]
-    securityContext:
-      runAsNonRoot: true
-      runAsUser: 999
-    volumeMounts:
-      - mountPath: /var/run/argocd
-        name: var-files
-      - mountPath: /home/argocd/cmp-server/plugins
-        name: plugins
-      - mountPath: /tmp
-        name: cmp-tmp
+spec:
+  # Add the sidecar to the repo-server
+  repo:
+    sidecarContainers:
+      - name: kubenv-cmp
+        image: ghcr.io/dexiotropic/kubenv-argocd-cmp:latest
+        command: ["/var/run/argocd/argocd-cmp-server"]
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 999
+        volumeMounts:
+          - mountPath: /var/run/argocd
+            name: var-files
+          - mountPath: /home/argocd/cmp-server/plugins
+            name: plugins
+          - mountPath: /tmp
+            name: cmp-tmp
+    # Add the plugin tmp volume if not already defined
+    volumes:
+      - name: cmp-tmp
+        emptyDir: {}
 ```
 
-If your Argo CD installation does not already define `cmp-tmp`, add a separate `emptyDir` volume for it just as the Argo CD documentation recommends.
+### Argo CD Helm chart
 
-If you prefer automatic sidecar updates, use `:latest`. If you prefer reproducible deployments, pin a specific release tag such as `:v0.2.1`.
+If you manage Argo CD with the Helm chart, you can add the sidecar to your `values.yaml`:
+
+```yaml
+repoServer:
+  extraContainers:
+    - name: kubenv-cmp
+      image: ghcr.io/dexiotropic/kubenv-argocd-cmp:latest
+      command: ["/var/run/argocd/argocd-cmp-server"]
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+      volumeMounts:
+        - mountPath: /var/run/argocd
+          name: var-files
+        - mountPath: /home/argocd/cmp-server/plugins
+          name: plugins
+        - mountPath: /tmp
+          name: cmp-tmp
+  # Add the plugin tmp volume if not already defined
+  volumes:
+    - name: cmp-tmp
+      emptyDir: {}
+```
+
+### Custom installation by patching `argocd-repo-server`
+
+If you manage Argo CD with a custom method, you can patch `argocd-repo-server` directly to add the sidecar. The exact patch depends on your deployment method, but the sidecar container definition should look roughly like the previous examples.
 
 ## Variable sources
 
@@ -99,7 +105,7 @@ You can set individual variables as string parameters:
 spec:
   source:
     plugin:
-      name: kubenv-v0.1.0
+      name: kubenv
       parameters:
         - name: GREETING
           string: hello
@@ -113,7 +119,7 @@ Or you can pass a single map parameter:
 spec:
   source:
     plugin:
-      name: kubenv-v0.1.0
+      name: kubenv
       parameters:
         - name: vars
           map:
@@ -127,6 +133,26 @@ Both forms support the same manifest placeholders:
 data:
   message: "{{ env.GREETING }} {{ env.NAME }}"
 ```
+
+## Supported environment variables
+
+You can also set environment variables on the plugin source
+
+```yaml
+spec:
+  source:
+    plugin:
+      name: kubenv
+      env:
+        - name: GREETING
+          value: hello
+        - name: NAME
+          value: world
+```
+
+These variables are prefixed with `ARGOCD_ENV_` and the plugin reads them with higher precedence than process environment variables like variables that could have been set with `env` in the sidecar definition or inherited from the repo-server environment.
+
+If you pin the sidecar image to a tagged release, change `spec.source.plugin.name` to match that tag, for example `kubenv-v0.3.0`.
 
 ## Notes
 

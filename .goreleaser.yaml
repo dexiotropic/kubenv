@@ -5,6 +5,7 @@ project_name: kubenv
 before:
   hooks:
     - go test ./...
+    - ./scripts/generate-argocd-plugin.sh dist/plugin-versioned.yaml v{{ .Version }}
 
 builds:
   - id: kubenv
@@ -98,14 +99,26 @@ changelog:
   use: github-native
 
 dockers_v2:
-  - id: kubenv-argocd-cmp
+  - id: kubenv-argocd-cmp-versioned
+    ids:
+      - kubenv-argocd-cmp
+    dockerfile: Dockerfile.argocd-cmp-versioned
+    images:
+      - ghcr.io/dexiotropic/kubenv-argocd-cmp
+    tags:
+      - "v{{ .Version }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    extra_files:
+      - dist/plugin-versioned.yaml
+  - id: kubenv-argocd-cmp-latest
     ids:
       - kubenv-argocd-cmp
     dockerfile: Dockerfile.argocd-cmp
     images:
       - ghcr.io/dexiotropic/kubenv-argocd-cmp
     tags:
-      - "{{ .Tag }}"
       - latest
     platforms:
       - linux/amd64
