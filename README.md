@@ -10,11 +10,47 @@ It is intentionally narrow in scope:
 - no loops, overlays, or packaging model
 - compatible with Argo CD Config Management Plugin parameters
 
-If you need a full templating system with conditionals, loops, or chart packaging, Helm and Kustomize are a better fit. `kubenv` is aimed at the smaller problem of making a few manifest variables explicit and safe.
+Use `kubenv` when you want a small, explicit renderer for a few manifest variables without moving into Helm or Kustomize territory. If you need conditionals, loops, overlays, or chart packaging, Helm and Kustomize are a better fit.
 
-## Repository overview
+Compared to a generic `envsubst` wrapper, `kubenv` is intentionally stricter:
 
-This repository currently ships three entrypoints that share the same renderer:
+- explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
+- fail-fast behavior on missing variables
+- the same renderer exposed through the direct CLI, `kubectl env`, and Argo CD CMP
+- explicit dotenv and `--set` inputs instead of relying only on ambient shell state
+
+## Comparison with `kubectl-envsubst`
+
+[`hashmap-kz/kubectl-envsubst`](https://github.com/hashmap-kz/kubectl-envsubst) is a good reference point for this space, and it solves a slightly different problem.
+
+| Area | `kubectl-envsubst` | `kubenv` |
+| --- | --- | --- |
+| Placeholder syntax | Shell-style `$VAR` / `${VAR}` | Explicit `{{ env.NAME }}` |
+| Main interface | `kubectl envsubst apply ...` | `kubenv`, `kubectl env`, and Argo CD CMP |
+| Variable source model | Process env filtered by allowed vars or prefixes | `--set`, process env, dotenv, and CMP parameters |
+| Safety model | Allow-list and prefix filters reduce accidental substitutions | Placeholder syntax avoids shell-style collisions and missing variables fail immediately |
+| File handling | Supports directory walking, glob expansion, recursive mode, stdin, and remote URLs | Supports stdin and explicitly listed files in order |
+
+So the difference is not "better at everything"; it is "safer and more explicit for a narrower workflow."
+
+`kubectl-envsubst` is currently ahead in a few areas that matter for a `kubectl apply`-style plugin:
+
+- directory and glob expansion
+- recursive directory traversal
+- fetching remote manifest URLs directly
+- allow-list or prefix-based substitution controls for shell-style placeholders
+
+`kubenv` is stronger when you want:
+
+- placeholders that do not collide with `$`-heavy configs such as shell snippets or NGINX config
+- the same render contract across local CLI usage, `kubectl`, and Argo CD
+- explicit non-shell inputs such as dotenv files, `--set`, and Argo CD plugin parameters
+
+If you want a near-drop-in `kubectl apply` preprocessor for existing `${VAR}` manifests, `kubectl-envsubst` may be the better fit today. If you want a small but explicit renderer with a cleaner GitOps and Argo CD story, that is where `kubenv` is aiming.
+
+## Choose your entrypoint
+
+You can use the same renderer through three entrypoints:
 
 | Entrypoint | Purpose | Docs |
 | --- | --- | --- |
@@ -22,7 +58,7 @@ This repository currently ships three entrypoints that share the same renderer:
 | `kubectl env` | kubectl plugin wrapper around the same renderer | [`docs/KUBECTL.md`](docs/KUBECTL.md) |
 | `kubenv-argocd-cmp` | Argo CD Config Management Plugin entrypoint | [`docs/ARGOCD.md`](docs/ARGOCD.md) |
 
-Implementation layout:
+If you are looking around the source tree:
 
 - `cmd/kubenv`: main CLI binary
 - `cmd/kubectl-env`: kubectl plugin binary
@@ -39,31 +75,31 @@ Implementation layout:
 
 ## Start here
 
-For the direct CLI:
+If you want the direct CLI:
 
 - [`docs/KUBENV.md`](docs/KUBENV.md)
 
-For the kubectl plugin:
+If you want the kubectl plugin:
 
 - [`docs/KUBECTL.md`](docs/KUBECTL.md)
 
-For Argo CD CMP integration:
+If you want Argo CD CMP integration:
 
 - [`docs/ARGOCD.md`](docs/ARGOCD.md)
 
-For internal structure notes:
+If you want a quick codebase overview:
 
 - [`docs/architecture.md`](docs/architecture.md)
 
 ## Release automation
 
-The repository is set up to use:
+If you are maintaining releases for this project, the release flow uses:
 
 - **Release Please** for conventional-commit-driven versioning and GitHub releases
 - **GoReleaser** for multi-platform binaries, checksums, and the Argo CD CMP image
 - repo scripts for generating the Homebrew formula and Krew manifest release assets
 
-Release outputs are intended to include:
+Published releases are intended to include:
 
 - `kubenv` archives for Linux, macOS, and Windows
 - `kubectl-env` archives for Linux, macOS, and Windows
@@ -73,13 +109,15 @@ Release outputs are intended to include:
 - a generated Krew plugin manifest
 - a published `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` image
 
+Use the generated `env.yaml` release asset when you open a `krew-index` submission PR.
+
 If you also want the Homebrew tap updated automatically after each published release, set:
 
 - repository variable `HOMEBREW_TAP_REPOSITORY` to the tap repo, for example `dexiotropic/homebrew-tap`
 - optional repository variable `HOMEBREW_TAP_BRANCH` if it is not `main`
 - repository secret `HOMEBREW_TAP_TOKEN` with write access to that tap repository
 
-Release Please is configured to use an explicit repository secret:
+Release Please uses an explicit repository secret:
 
 - `RELEASE_PLEASE_TOKEN`
 

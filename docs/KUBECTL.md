@@ -1,6 +1,6 @@
 # kubectl env plugin
 
-The kubectl plugin wraps the same renderer used by `kubenv`, but presents it through:
+Use the kubectl plugin when you want the same renderer exposed as:
 
 ```sh
 kubectl env
@@ -18,11 +18,38 @@ Make sure the output directory is on `PATH`, then verify:
 kubectl plugin list
 ```
 
-Release automation also generates a Krew manifest release asset named `env.yaml`, which can be submitted to a Krew index repository later.
+Release automation also generates a Krew manifest release asset named `env.yaml`, which you can use when submitting the plugin to a Krew index repository.
+
+You can inspect plugin help directly:
+
+```sh
+kubectl env --help
+kubectl env render --help
+kubectl env apply --help
+```
+
+## Comparison with `kubectl-envsubst`
+
+[`hashmap-kz/kubectl-envsubst`](https://github.com/hashmap-kz/kubectl-envsubst) is the closest existing plugin in this space, but the trade-offs are different.
+
+`kubectl-envsubst` currently supports several apply-oriented features that `kubenv` does not:
+
+- directory inputs with optional recursive traversal
+- glob expansion
+- remote `-f https://...` manifests
+- allow-list and prefix-based filtering over `$VAR` / `${VAR}` placeholders
+
+`kubenv` makes the opposite trade:
+
+- it uses explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
+- it shares the same render behavior across `kubenv`, `kubectl env`, and Argo CD CMP
+- it supports dotenv files and explicit `--set` overrides in addition to process env
+
+So if you are working with existing `${VAR}` manifests and want behavior close to a stricter `kubectl apply` wrapper, `kubectl-envsubst` may be a better fit today. If you want explicit placeholders and consistent behavior across local and GitOps entrypoints, `kubenv` is the better fit.
 
 ## Usage
 
-Primary plugin flow:
+The main plugin flow is:
 
 ```sh
 kubectl env --dotenv -f examples/configmap.yaml apply --namespace default

@@ -1,6 +1,31 @@
 # kubenv CLI
 
-The `kubenv` binary renders manifests with strict `{{ env.NAME }}` substitution.
+Use the `kubenv` binary when you want to render manifests locally with strict `{{ env.NAME }}` substitution.
+
+## Installation
+
+### Brew
+
+```sh
+brew tap dexiotropic/homebrew-tap
+brew install kubenv
+```
+
+### Build from source
+
+```sh
+go build -o kubenv ./cmd/kubenv
+```
+
+## Help
+
+You can inspect command and flag help directly from the binary:
+
+```sh
+kubenv --help
+kubenv render --help
+kubenv apply --help
+```
 
 ## Commands
 
@@ -19,7 +44,7 @@ kubenv render -f first.yaml -f second.yaml
 kubenv apply --dotenv -f examples/configmap.yaml -- --namespace default
 ```
 
-`apply` renders first and then runs:
+`apply` renders your manifests first and then runs:
 
 ```sh
 kubectl apply -f -
@@ -35,7 +60,7 @@ Any arguments after `--` are forwarded to `kubectl apply`.
 2. process environment
 3. `.env` via `--dotenv` or a specific file via `--dotenv-file`
 
-Notes:
+Keep in mind:
 
 - `--dotenv` loads `.env`
 - `--dotenv-file <path>` loads a specific dotenv file
