@@ -1,7 +1,7 @@
 # kubenv
 
-[![CI](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml)
-[![Coverage](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml)
+[![CI](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml)
+[![Coverage](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml/badge.svg?branch=main&event=push)](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml)
 
 `kubenv` is a minimal manifest renderer for Kubernetes-focused variable substitution.
 
