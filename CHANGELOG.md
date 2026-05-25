@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3](https://github.com/dexiotropic/kubenv/compare/v0.3.2...v0.3.3) (2026-05-25)
+
+
+### Bug Fixes
+
+* **argocd:** generate plugin version from dockerfile ([59132ce](https://github.com/dexiotropic/kubenv/commit/59132ce5da17d302d9c14713c5f1e4baa3a448b2))
+
 ## [0.3.2](https://github.com/dexiotropic/kubenv/compare/v0.3.1...v0.3.2) (2026-05-25)
 
 
