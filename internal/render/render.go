@@ -3,13 +3,17 @@ package render
 import (
 	"fmt"
 	"regexp"
+	"sort"
 )
 
+// Style controls which placeholder syntax the renderer accepts.
 type Style string
 
 const (
+	// StyleExplicit renders placeholders in the form {{ env.NAME }}.
 	StyleExplicit Style = "explicit"
-	StyleShell    Style = "shell"
+	// StyleShell renders placeholders in the form $NAME or ${NAME}.
+	StyleShell Style = "shell"
 )
 
 // Match variables in the form of {{ env.VAR_NAME }}
@@ -30,10 +34,12 @@ func FromEnviron(environ []string) map[string]string {
 	return vars
 }
 
+// Strict renders using the default explicit placeholder style.
 func Strict(input []byte, vars map[string]string) ([]byte, error) {
 	return StrictWithStyle(input, vars, StyleExplicit)
 }
 
+// StrictWithStyle renders using the provided placeholder style and fails on missing variables.
 func StrictWithStyle(input []byte, vars map[string]string, style Style) ([]byte, error) {
 	pattern := explicitVariablePattern
 	switch style {
@@ -83,5 +89,6 @@ func keys(items map[string]struct{}) []string {
 	for key := range items {
 		out = append(out, key)
 	}
+	sort.Strings(out)
 	return out
 }

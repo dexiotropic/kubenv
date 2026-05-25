@@ -106,6 +106,7 @@ dockers_v2:
       - ghcr.io/dexiotropic/kubenv-argocd-cmp
     tags:
       - "{{ .Tag }}"
+      - latest
     platforms:
       - linux/amd64
       - linux/arm64

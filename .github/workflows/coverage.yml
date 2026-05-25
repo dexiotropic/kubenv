@@ -1,0 +1,38 @@
+name: Coverage
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    env:
+      MIN_COVERAGE: "75.0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run coverage
+        run: go test ./... -coverprofile=coverage.out
+
+      - name: Report coverage
+        run: |
+          set -euo pipefail
+          total="$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%","",$3); print $3}')"
+          printf 'Total coverage: %s%%\n' "$total"
+          printf '## Coverage\n\n- Total statement coverage: **%s%%**\n- Minimum required coverage: **%s%%**\n' "$total" "$MIN_COVERAGE" >> "$GITHUB_STEP_SUMMARY"
+          awk -v total="$total" -v min="$MIN_COVERAGE" 'BEGIN { exit !(total+0 >= min+0) }'
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out

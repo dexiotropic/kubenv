@@ -1,5 +1,8 @@
 # kubenv
 
+[![CI](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml)
+[![Coverage](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml)
+
 `kubenv` is a minimal manifest renderer for Kubernetes-focused variable substitution.
 
 It is intentionally narrow in scope:
@@ -11,6 +14,8 @@ It is intentionally narrow in scope:
 - compatible with Argo CD Config Management Plugin parameters
 
 Use `kubenv` when you want a small, explicit renderer for a few manifest variables without moving into Helm or Kustomize territory. If you need conditionals, loops, overlays, or chart packaging, Helm and Kustomize are a better fit.
+
+The coverage badge tracks the repository's GitHub Actions coverage gate, which currently requires at least 75% total Go statement coverage.
 
 Compared to a generic `envsubst` wrapper, `kubenv` is intentionally stricter:
 
@@ -90,6 +95,7 @@ If you want Argo CD CMP integration:
 If you want a quick codebase overview:
 
 - [`docs/architecture.md`](docs/architecture.md)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ## Release automation
 
@@ -107,7 +113,7 @@ Published releases are intended to include:
 - `checksums.txt`
 - a generated Homebrew formula artifact
 - a generated Krew plugin manifest
-- a published `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` image
+- published `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` and `ghcr.io/dexiotropic/kubenv-argocd-cmp:latest` images
 
 Use the generated `env.yaml` release asset when you open a `krew-index` submission PR.
 

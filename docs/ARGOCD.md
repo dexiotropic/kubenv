@@ -9,6 +9,7 @@ The example plugin definition lives at:
 Release automation publishes:
 
 - a `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` sidecar image
+- a moving `ghcr.io/dexiotropic/kubenv-argocd-cmp:latest` sidecar image
 - a `kubenv-argocd-plugin.yaml` release asset generated from `packaging/argocd/plugin.yaml`
 
 ## Which installation model this project uses
@@ -64,7 +65,7 @@ The exact patch depends on how you manage Argo CD, but your sidecar should look 
 ```yaml
 containers:
   - name: kubenv-cmp
-    image: ghcr.io/dexiotropic/kubenv-argocd-cmp:v0.1.0
+    image: ghcr.io/dexiotropic/kubenv-argocd-cmp:latest
     command: ["/var/run/argocd/argocd-cmp-server"]
     securityContext:
       runAsNonRoot: true
@@ -79,6 +80,8 @@ containers:
 ```
 
 If your Argo CD installation does not already define `cmp-tmp`, add a separate `emptyDir` volume for it just as the Argo CD documentation recommends.
+
+If you prefer automatic sidecar updates, use `:latest`. If you prefer reproducible deployments, pin a specific release tag such as `:v0.2.1`.
 
 ## Variable sources
 

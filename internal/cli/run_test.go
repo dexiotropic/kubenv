@@ -63,6 +63,18 @@ func TestRunKubectlPluginShowsHelp(t *testing.T) {
 	}
 }
 
+func TestRunVersionShowsCommitAndDate(t *testing.T) {
+	var stdout bytes.Buffer
+	err := Run([]string{"version"}, strings.NewReader(""), &stdout, ioDiscard{}, nil)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	assertContains(t, stdout.String(), "dev")
+	assertContains(t, stdout.String(), "commit none")
+	assertContains(t, stdout.String(), "built unknown")
+}
+
 func TestRunRenderLoadsDefaultDotenv(t *testing.T) {
 	t.Setenv("GREETING", "")
 	dir := t.TempDir()
