@@ -1,12 +1,19 @@
 FROM alpine:3.20
 
 ARG TARGETPLATFORM
+ARG PLUGIN_VERSION
 
 RUN mkdir -p /home/argocd/cmp-server/config /home/argocd/cmp-server/plugins /tmp \
     && chown -R 999:999 /home/argocd /tmp
 
 COPY --chown=999:999 $TARGETPLATFORM/kubenv-argocd-cmp /usr/local/bin/kubenv-argocd-cmp
-COPY --chown=999:999 dist/plugin-versioned.yaml /home/argocd/cmp-server/config/plugin.yaml
+COPY --chown=999:999 packaging/argocd/plugin.yaml /tmp/plugin.yaml
+RUN awk -v plugin_version="$PLUGIN_VERSION" '\
+  { print } \
+  $0 == "spec:" && plugin_version != "" { print "  version: " plugin_version }\
+' /tmp/plugin.yaml >/home/argocd/cmp-server/config/plugin.yaml \
+    && chown 999:999 /home/argocd/cmp-server/config/plugin.yaml \
+    && rm /tmp/plugin.yaml
 
 USER 999
 ENTRYPOINT ["/var/run/argocd/argocd-cmp-server"]
