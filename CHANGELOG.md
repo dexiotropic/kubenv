@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/dexiotropic/kubenv/compare/v0.3.0...v0.3.1) (2026-05-25)
+
+
+### Bug Fixes
+
+* **dev:** include commit and date in version info ([0f4ba2a](https://github.com/dexiotropic/kubenv/commit/0f4ba2a2108d6679f92f7129c19f670adb224c1a))
+
 ## [0.3.0](https://github.com/dexiotropic/kubenv/compare/v0.2.2...v0.3.0) (2026-05-25)
 
 
