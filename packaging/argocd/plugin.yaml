@@ -9,7 +9,7 @@ spec:
       - '-c'
     args:
       - >-
-        find . -type f \( -name '*.yaml' -o -name '*.yml' \) -print0 | xargs -0
+        find . -type f \( -name '*.yaml' -o -name '*.yml' -o -name '*.json' \) -print0 | xargs -0
         cat | kubenv-argocd-cmp
   parameters:
     static:
@@ -18,9 +18,8 @@ spec:
         tooltip: Map of variables exposed to {{ env.NAME }} placeholders.
         collectionType: map
         map: {}
-  discover:
-    find:
-      command:
-        - sh
-        - '-c'
-        - find . -name '.kubenv.yaml' -o -name 'kubenv.yaml' | grep .
+      - name: kubenv
+        title: kubenv options
+        tooltip: Plugin behavior settings such as shell-style placeholder rendering.
+        collectionType: map
+        map: {}

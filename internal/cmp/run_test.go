@@ -41,6 +41,37 @@ func TestRunUsesCMPMapParameters(t *testing.T) {
 	}
 }
 
+func TestRunUsesShellStyleWhenKubenvOptionIsEnabled(t *testing.T) {
+	var stdout bytes.Buffer
+	err := Run(
+		nil,
+		bytes.NewBufferString("msg: $GREETING ${NAME}\n"),
+		&stdout,
+		bytes.NewBuffer(nil),
+		[]string{`ARGOCD_APP_PARAMETERS=[{"name":"kubenv","map":{"shell-style":"true"}},{"name":"vars","map":{"GREETING":"hello","NAME":"world"}}]`},
+	)
+	if err != nil {
+		t.Fatalf("Run returned error: %v", err)
+	}
+
+	if got := stdout.String(); got != "msg: hello world\n" {
+		t.Fatalf("unexpected output: %q", got)
+	}
+}
+
+func TestRunFailsOnInvalidKubenvOption(t *testing.T) {
+	err := Run(
+		nil,
+		bytes.NewBufferString("msg: $GREETING\n"),
+		bytes.NewBuffer(nil),
+		bytes.NewBuffer(nil),
+		[]string{`ARGOCD_APP_PARAMETERS=[{"name":"kubenv","map":{"shell-style":"not-a-bool"}}]`},
+	)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
 func TestRunCMPParametersOverrideProcessEnv(t *testing.T) {
 	var stdout bytes.Buffer
 	err := Run(

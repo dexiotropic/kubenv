@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"strconv"
 	"strings"
 
 	"github.com/dexiotropic/kubenv/internal/render"
@@ -32,12 +33,12 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []str
 				return err
 			}
 
-			vars, err := loadVariables(environ)
+			vars, style, err := loadVariables(environ)
 			if err != nil {
 				return err
 			}
 
-			output, err := render.Strict(input, vars)
+			output, err := render.StrictWithStyle(input, vars, style)
 			if err != nil {
 				return err
 			}
@@ -52,9 +53,10 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []str
 
 // loadVariables processes the environment variables according to the precedence rules defined by Argo CD CMP.
 // For reference, see https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/#using-environment-variables-in-your-plugin
-func loadVariables(environ []string) (map[string]string, error) {
+func loadVariables(environ []string) (map[string]string, render.Style, error) {
 	// Process environment variables take the lowest precedence.
 	vars := render.FromEnviron(environ)
+	style := render.StyleExplicit
 
 	// Then we include all environment variables with the ARGOCD_ENV_ prefix, stripping the prefix first.
 	for _, entry := range environ {
@@ -70,28 +72,40 @@ func loadVariables(environ []string) (map[string]string, error) {
 	}
 
 	// Finally, we include the ARGOCD_APP_PARAMETERS, which have the highest precedence.
-	parameters, err := loadParameters(environ)
+	parameters, options, err := loadParameters(environ)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	maps.Copy(vars, parameters)
-	return vars, nil
+	if options.shellStyle {
+		style = render.StyleShell
+	}
+
+	return vars, style, nil
 }
 
-func loadParameters(environ []string) (map[string]string, error) {
+func loadParameters(environ []string) (map[string]string, cmpOptions, error) {
 	raw := lookupEnv(environ, "ARGOCD_APP_PARAMETERS")
 	if raw == "" {
-		return map[string]string{}, nil
+		return map[string]string{}, cmpOptions{}, nil
 	}
 
 	var parameters []parameter
 	if err := json.Unmarshal([]byte(raw), &parameters); err != nil {
-		return nil, fmt.Errorf("invalid ARGOCD_APP_PARAMETERS: %w", err)
+		return nil, cmpOptions{}, fmt.Errorf("invalid ARGOCD_APP_PARAMETERS: %w", err)
 	}
 
 	vars := map[string]string{}
+	options := cmpOptions{}
 	for _, parameter := range parameters {
+		if parameter.Name == "kubenv" {
+			if err := options.apply(parameter.Map); err != nil {
+				return nil, cmpOptions{}, err
+			}
+			continue
+		}
+
 		if parameter.String != nil {
 			vars[parameter.Name] = *parameter.String
 		}
@@ -103,7 +117,28 @@ func loadParameters(environ []string) (map[string]string, error) {
 		}
 	}
 
-	return vars, nil
+	return vars, options, nil
+}
+
+type cmpOptions struct {
+	shellStyle bool
+}
+
+func (options *cmpOptions) apply(values map[string]string) error {
+	for key, value := range values {
+		switch key {
+		case "shell-style":
+			enabled, err := strconv.ParseBool(value)
+			if err != nil {
+				return fmt.Errorf("invalid kubenv.shell-style value %q: %w", value, err)
+			}
+			options.shellStyle = enabled
+		default:
+			return fmt.Errorf("unsupported kubenv option: %s", key)
+		}
+	}
+
+	return nil
 }
 
 type parameter struct {

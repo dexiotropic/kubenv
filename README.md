@@ -24,7 +24,7 @@ Compared to a generic `envsubst` wrapper, `kubenv` is intentionally stricter:
 - the same renderer exposed through the direct CLI, `kubectl env`, and Argo CD CMP
 - explicit dotenv and `--set` inputs instead of relying only on ambient shell state
 
-If you need shell-style placeholders for an existing manifest set, you can opt into `$VAR` / `${VAR}` rendering in the CLI and kubectl plugin with `--shell-style` while keeping `{{ env.NAME }}` as the default mode.
+If you need shell-style placeholders for an existing manifest set, you can opt into `$VAR` / `${VAR}` rendering while keeping `{{ env.NAME }}` as the default mode. The direct CLI and `kubectl env` use `--shell-style`, and the Argo CD CMP uses the `kubenv.shell-style` plugin parameter.
 
 ## Comparison with `kubectl-envsubst`
 
@@ -32,7 +32,7 @@ If you need shell-style placeholders for an existing manifest set, you can opt i
 
 | Area | `kubectl-envsubst` | `kubenv` |
 | --- | --- | --- |
-| Placeholder syntax | Shell-style `$VAR` / `${VAR}` | Explicit `{{ env.NAME }}` by default, optional `--shell-style` for CLI and kubectl plugin |
+| Placeholder syntax | Shell-style `$VAR` / `${VAR}` | Explicit `{{ env.NAME }}` by default, with optional shell-style support in every entrypoint |
 | Main interface | `kubectl envsubst apply ...` | `kubenv`, `kubectl env`, and Argo CD CMP |
 | Variable source model | Process env filtered by allowed vars or prefixes | `--set`, process env, dotenv, and CMP parameters |
 | Safety model | Allow-list and prefix filters reduce accidental substitutions | Placeholder syntax avoids shell-style collisions and missing variables fail immediately |

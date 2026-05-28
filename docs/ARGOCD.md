@@ -89,6 +89,12 @@ repoServer:
 
 If you manage Argo CD with a custom method, you can patch `argocd-repo-server` directly to add the sidecar. The exact patch depends on your deployment method, but the sidecar container definition should look roughly like the previous examples.
 
+## Plugin selection
+
+This plugin is configured for explicit use.
+
+Set `spec.source.plugin.name` in your Application and Argo CD will invoke `kubenv` directly without relying on repository discovery or marker files.
+
 ## Variable sources
 
 When kubenv runs inside Argo CD, variable precedence is:
@@ -134,6 +140,25 @@ data:
   message: "{{ env.GREETING }} {{ env.NAME }}"
 ```
 
+To switch the Argo CD CMP to shell-style placeholders for one application, set the `kubenv` map parameter:
+
+```yaml
+spec:
+  source:
+    plugin:
+      name: kubenv
+      parameters:
+        - name: kubenv
+          map:
+            shell-style: "true"
+        - name: vars
+          map:
+            GREETING: hello
+            NAME: world
+```
+
+With that option enabled, write placeholders as `$GREETING` or `${NAME}` in the rendered manifests.
+
 ## Supported environment variables
 
 You can also set environment variables on the plugin source
@@ -152,11 +177,28 @@ spec:
 
 These variables are prefixed with `ARGOCD_ENV_` and the plugin reads them with higher precedence than process environment variables like variables that could have been set with `env` in the sidecar definition or inherited from the repo-server environment.
 
+If you want to set a value from the Argo CD CLI instead of editing the Application manifest directly, use `argocd app set --plugin-env`:
+
+```bash
+argocd app set management-applications \
+  --config-management-plugin kubenv \
+  --plugin-env REPO_URL=https://github.com/your-org/your-repo.git
+```
+
+After that, sync the application and use the value in your manifests as `{{ env.REPO_URL }}`.
+
+> [!WARNING]
+> If you also set the parameter with `spec.source.plugin.parameters`, the parameter value takes precedence over the environment variable, so `{{ env.REPO_URL }}` would resolve to the parameter value instead of the environment variable value.
+
+If you are using a pinned sidecar image with a versioned plugin name, replace `kubenv` in that command with the matching plugin name such as `kubenv-v0.3.0`.
+
 If you pin the sidecar image to a tagged release, change `spec.source.plugin.name` to match that tag, for example `kubenv-v0.3.0`.
 
 ## Notes
 
+- the Argo CD CMP is selected explicitly through `spec.source.plugin.name`; it does not rely on discovery or marker files
+- the `kubenv` map parameter currently supports `shell-style: "true"` to switch placeholder parsing to `$NAME` and `${NAME}`
 - array parameters can be accessed with `{{ env.VAR_NAME_<index> }}` syntax; for example, to access the second element of an array parameter named `ITEMS`, use `{{ env.ITEMS_1 }}`
 - malformed `ARGOCD_APP_PARAMETERS` fails manifest generation
 - `ARGOCD_ENV_*` variables are exposed to placeholders without the prefix
-- the CMP config currently advertises a `vars` map parameter in `packaging/argocd/plugin.yaml`
+- the CMP config currently advertises `vars` and `kubenv` map parameters in `packaging/argocd/plugin.yaml`
