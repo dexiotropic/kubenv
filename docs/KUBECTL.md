@@ -20,6 +20,12 @@ kubectl plugin list
 
 Release automation also generates a Krew manifest release asset named `env.yaml`, which you can use when submitting the plugin to a Krew index repository.
 
+Once the plugin is available in the public Krew index, install it with:
+
+```sh
+kubectl krew install env
+```
+
 The default placeholder style is still `{{ env.NAME }}`. If you need compatibility with existing shell-style manifests, add `--shell-style` before `apply` or before the direct `render` / `apply` subcommand.
 
 You can inspect plugin help directly:

@@ -15,6 +15,8 @@ It is intentionally narrow in scope:
 
 Use `kubenv` when you want a small, explicit renderer for a few manifest variables without moving into Helm or Kustomize territory. If you need conditionals, loops, overlays, or chart packaging, Helm and Kustomize are a better fit.
 
+If you are here for the Argo CD sidecar image published to GitHub Container Registry, start with [`docs/ARGOCD.md`](docs/ARGOCD.md). That guide covers sidecar installation, explicit plugin naming, `kubenv` plugin parameters, and the release assets that ship with each tagged image.
+
 The coverage badge tracks the repository's GitHub Actions coverage gate, which currently requires at least 75% total Go statement coverage.
 
 Compared to a generic `envsubst` wrapper, `kubenv` is intentionally stricter:
@@ -87,6 +89,12 @@ If you want the direct CLI:
 If you want the kubectl plugin:
 
 - [`docs/KUBECTL.md`](docs/KUBECTL.md)
+
+Once this plugin is published in the public Krew index, the expected install command will be:
+
+```sh
+kubectl krew install env
+```
 
 If you want Argo CD CMP integration:
 

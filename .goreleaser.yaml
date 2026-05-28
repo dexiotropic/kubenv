@@ -106,6 +106,13 @@ dockers_v2:
       - ghcr.io/dexiotropic/kubenv-argocd-cmp
     tags:
       - "v{{ .Version }}"
+    annotations:
+      org.opencontainers.image.title: "kubenv Argo CD CMP"
+      org.opencontainers.image.description: "Argo CD Config Management Plugin sidecar for kubenv manifest rendering."
+      org.opencontainers.image.documentation: "https://github.com/dexiotropic/kubenv/blob/main/docs/ARGOCD.md"
+      org.opencontainers.image.source: "{{ .GitURL }}"
+      org.opencontainers.image.licenses: "Apache-2.0"
+      org.opencontainers.image.version: "v{{ .Version }}"
     build_args:
       PLUGIN_VERSION: "v{{ .Version }}"
     platforms:
@@ -121,6 +128,13 @@ dockers_v2:
       - ghcr.io/dexiotropic/kubenv-argocd-cmp
     tags:
       - latest
+    annotations:
+      org.opencontainers.image.title: "kubenv Argo CD CMP"
+      org.opencontainers.image.description: "Argo CD Config Management Plugin sidecar for kubenv manifest rendering."
+      org.opencontainers.image.documentation: "https://github.com/dexiotropic/kubenv/blob/main/docs/ARGOCD.md"
+      org.opencontainers.image.source: "{{ .GitURL }}"
+      org.opencontainers.image.licenses: "Apache-2.0"
+      org.opencontainers.image.version: "latest"
     platforms:
       - linux/amd64
       - linux/arm64
