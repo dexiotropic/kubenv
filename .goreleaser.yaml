@@ -59,6 +59,7 @@ archives:
       - src: docs/KUBENV.md
         dst: README.md
       - CHANGELOG.md
+      - LICENSE
     format_overrides:
       - goos: windows
         formats:
@@ -73,6 +74,7 @@ archives:
       - src: docs/KUBECTL.md
         dst: README.md
       - CHANGELOG.md
+      - LICENSE
     format_overrides:
       - goos: windows
         formats:
@@ -87,6 +89,7 @@ archives:
       - src: docs/ARGOCD.md
         dst: README.md
       - CHANGELOG.md
+      - LICENSE
 
 checksum:
   name_template: checksums.txt
