@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/dexiotropic/kubenv/compare/v0.3.3...v0.4.0) (2026-05-28)
+
+
+### Features
+
+* **argocd:** shell-style variables support using config parameter ([de42b20](https://github.com/dexiotropic/kubenv/commit/de42b20af2fb318f746fa226f2eb7df5202435fc))
+
 ## [0.3.3](https://github.com/dexiotropic/kubenv/compare/v0.3.2...v0.3.3) (2026-05-25)
 
 
