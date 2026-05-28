@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubenv-rollout-demo
+  labels:
+    app: kubenv-rollout-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubenv-rollout-demo
+  template:
+    metadata:
+      labels:
+        app: kubenv-rollout-demo
+    spec:
+      containers:
+        - name: logger-{{ env.COLOR }}
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              esc="$(printf '\033')"
+              while true; do
+                code="37"
+                case "$COLOR" in
+                  red) code="31" ;;
+                  green) code="32" ;;
+                  yellow) code="33" ;;
+                  blue) code="34" ;;
+                  magenta) code="35" ;;
+                  cyan) code="36" ;;
+                esac
+                printf '%b%s %s%b\n' \
+                  "${esc}[${code}m" \
+                  "$GREETING" \
+                  "$NAME" \
+                  "${esc}[0m"
+                sleep 5
+              done
+          env:
+            - name: GREETING
+              value: "{{ env.GREETING }}"
+            - name: NAME
+              value: "{{ env.NAME }}"
+            - name: COLOR
+              value: "{{ env.COLOR }}"
