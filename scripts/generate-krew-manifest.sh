@@ -57,10 +57,11 @@ metadata:
 spec:
   version: "${tag}"
   homepage: https://github.com/dexiotropic/kubenv
-  shortDescription: Strict manifest variable substitution
+  shortDescription: Render manifest variables
   description: |
-    kubenv renders Kubernetes manifests with strict {{ env.NAME }} substitution
-    and exposes the same renderer as the kubectl env plugin.
+    Render Kubernetes manifest variables before applying resources with
+    kubectl. The plugin uses {{ env.NAME }} placeholders by default and
+    can also render shell-style \$NAME and \${NAME} placeholders.
   platforms:
 EOF
 
