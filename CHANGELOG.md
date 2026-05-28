@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/dexiotropic/kubenv/compare/v0.4.1...v0.4.2) (2026-05-28)
+
+
+### Bug Fixes
+
+* **krew:** improve description ([0703d5c](https://github.com/dexiotropic/kubenv/commit/0703d5cf64fbb0b1442fdd776602c55e32b909d7))
+
 ## [0.4.1](https://github.com/dexiotropic/kubenv/compare/v0.4.0...v0.4.1) (2026-05-28)
 
 
