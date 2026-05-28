@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/dexiotropic/kubenv/compare/v0.4.0...v0.4.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **krew:** add license to plugin archive file ([9805d97](https://github.com/dexiotropic/kubenv/commit/9805d97cf4d03053135fc4b656d7d83150075fbf))
+
 ## [0.4.0](https://github.com/dexiotropic/kubenv/compare/v0.3.3...v0.4.0) (2026-05-28)
 
 
