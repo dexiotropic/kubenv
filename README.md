@@ -3,6 +3,8 @@
 [![CI](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/dexiotropic/kubenv/actions/workflows/ci.yml)
 [![Coverage](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml/badge.svg?branch=main&event=push)](https://github.com/dexiotropic/kubenv/actions/workflows/coverage.yml)
 
+https://github.com/user-attachments/assets/d48528fc-525f-4c49-95ca-eea6107f2d6f
+
 `kubenv` is a minimal manifest renderer for Kubernetes-focused variable substitution.
 
 It is intentionally narrow in scope:
