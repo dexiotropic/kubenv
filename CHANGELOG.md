@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/dexiotropic/kubenv/compare/v0.4.2...v0.5.0) (2026-05-31)
+
+
+### Features
+
+* **render:** add explicit placeholder mode escaping capabilities ([4ba4fab](https://github.com/dexiotropic/kubenv/commit/4ba4fab2cecd64de28667b1ec0a9687ca369520b))
+
+
+### Bug Fixes
+
+* **krew:** rename plugin to a less generic kenv name ([62daf21](https://github.com/dexiotropic/kubenv/commit/62daf21cfe875f5bdf28bdac66ffbeae78157d12))
+
 ## [0.4.2](https://github.com/dexiotropic/kubenv/compare/v0.4.1...v0.4.2) (2026-05-28)
 
 
