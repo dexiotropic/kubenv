@@ -53,7 +53,7 @@ jobs:
           cp packaging/argocd/plugin.yaml "dist/kubenv-argocd-plugin.yaml"
           ./scripts/generate-argocd-plugin.sh "dist/kubenv-argocd-plugin-versioned.yaml" "$TAG"
           ./scripts/generate-homebrew-formula.sh "$TAG" "$VERSION" "$REPOSITORY" "dist/kubenv.rb"
-          ./scripts/generate-krew-manifest.sh "$TAG" "$VERSION" "$REPOSITORY" "dist/env.yaml"
+          ./scripts/generate-krew-manifest.sh "$TAG" "$VERSION" "$REPOSITORY" "dist/kenv.yaml"
 
       - name: Upload extra release assets
         env:

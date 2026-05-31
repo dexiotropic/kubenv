@@ -18,13 +18,13 @@ platform_block() {
   local os="$1"
   local arch="$2"
   local ext="$3"
-  local bin="kubectl-env"
+  local bin="kubectl-kenv"
 
   if [[ "$os" == "windows" ]]; then
-    bin="kubectl-env.exe"
+    bin="kubectl-kenv.exe"
   fi
 
-  local artifact="kubenv_kubectl-env_${version}_${os}_${arch}.${ext}"
+  local artifact="kubenv_kubectl-kenv_${version}_${os}_${arch}.${ext}"
   local sha
   sha="$(sha256sum "${dist_dir}/${artifact}" | awk '{print $1}')"
 
@@ -53,7 +53,7 @@ platforms=(
 apiVersion: krew.googlecontainertools.github.com/v1alpha2
 kind: Plugin
 metadata:
-  name: env
+  name: kenv
 spec:
   version: "${tag}"
   homepage: https://github.com/dexiotropic/kubenv

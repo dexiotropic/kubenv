@@ -22,9 +22,9 @@ builds:
     ldflags: &ldflags
       - -s -w -X github.com/dexiotropic/kubenv/internal/version.version={{ .Version }} -X github.com/dexiotropic/kubenv/internal/version.commit={{ .Commit }} -X github.com/dexiotropic/kubenv/internal/version.date={{ .Date }}
 
-  - id: kubectl-env
-    main: ./cmd/kubectl-env
-    binary: kubectl-env
+  - id: kubectl-kenv
+    main: ./cmd/kubectl-kenv
+    binary: kubectl-kenv
     env:
       - CGO_ENABLED=0
     goos:
@@ -64,9 +64,9 @@ archives:
       - goos: windows
         formats:
           - zip
-  - id: kubectl-env-archive
+  - id: kubectl-kenv-archive
     ids:
-      - kubectl-env
+      - kubectl-kenv
     name_template: "{{ .ProjectName }}_{{ .Binary }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     formats:
       - tar.gz

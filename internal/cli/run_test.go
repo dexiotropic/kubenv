@@ -55,7 +55,7 @@ func TestRunKubectlPluginShowsHelp(t *testing.T) {
 		t.Fatalf("RunKubectlPlugin returned error: %v", err)
 	}
 
-	assertContains(t, stdout.String(), "kubectl env [kubenv flags] apply [kubectl apply flags]")
+	assertContains(t, stdout.String(), "kubectl kenv [kubenv flags] apply [kubectl apply flags]")
 	assertContains(t, stdout.String(), "render")
 	assertContains(t, stdout.String(), "apply")
 	if got := stderr.String(); got != "" {

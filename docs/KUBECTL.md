@@ -1,15 +1,15 @@
-# kubectl env plugin
+# kubectl kenv plugin
 
 Use the kubectl plugin when you want the same renderer exposed as:
 
 ```sh
-kubectl env
+kubectl kenv
 ```
 
 ## Build and install locally
 
 ```sh
-go build -o ~/.krew/bin/kubectl-env ./cmd/kubectl-env
+go build -o ~/.krew/bin/kubectl-kenv ./cmd/kubectl-kenv
 ```
 
 Make sure the output directory is on `PATH`, then verify:
@@ -18,12 +18,12 @@ Make sure the output directory is on `PATH`, then verify:
 kubectl plugin list
 ```
 
-Release automation also generates a Krew manifest release asset named `env.yaml`, which you can use when submitting the plugin to a Krew index repository.
+Release automation also generates a Krew manifest release asset named `kenv.yaml`, which you can use when submitting the plugin to a Krew index repository.
 
 Once the plugin is available in the public Krew index, install it with:
 
 ```sh
-kubectl krew install env
+kubectl krew install kenv
 ```
 
 The default placeholder style is still `{{ env.NAME }}`. If you need compatibility with existing shell-style manifests, add `--shell-style` before `apply` or before the direct `render` / `apply` subcommand.
@@ -31,9 +31,9 @@ The default placeholder style is still `{{ env.NAME }}`. If you need compatibili
 You can inspect plugin help directly:
 
 ```sh
-kubectl env --help
-kubectl env render --help
-kubectl env apply --help
+kubectl kenv --help
+kubectl kenv render --help
+kubectl kenv apply --help
 ```
 
 ## Comparison with `kubectl-envsubst`
@@ -47,7 +47,7 @@ kubectl env apply --help
 `kubenv` makes the opposite trade:
 
 - it uses explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
-- it shares the same render behavior across `kubenv`, `kubectl env`, and Argo CD CMP
+- it shares the same render behavior across `kubenv`, `kubectl kenv`, and Argo CD CMP
 - it supports dotenv files and explicit `--set` overrides in addition to process env
 - it supports files, directories, glob patterns, recursive directory traversal, stdin, and remote `-f https://...` manifests
 - it can also opt into `$VAR` / `${VAR}` rendering with `--shell-style` when you need that compatibility
@@ -59,11 +59,11 @@ So if you are working with existing `${VAR}` manifests and want behavior close t
 The main plugin flow is:
 
 ```sh
-kubectl env --dotenv -f examples/configmap.yaml apply --namespace default
-kubectl env -f manifests/ --recursive apply --namespace default
-kubectl env -f 'manifests/*.yaml' apply --dry-run=client -o yaml
-kubectl env -f https://example.com/manifest.yaml apply --namespace default
-kubectl env --shell-style --set IMAGE_TAG=1.2.3 -f deployment.yaml apply --namespace default
+kubectl kenv --dotenv -f examples/configmap.yaml apply --namespace default
+kubectl kenv -f manifests/ --recursive apply --namespace default
+kubectl kenv -f 'manifests/*.yaml' apply --dry-run=client -o yaml
+kubectl kenv -f https://example.com/manifest.yaml apply --namespace default
+kubectl kenv --shell-style --set IMAGE_TAG=1.2.3 -f deployment.yaml apply --namespace default
 ```
 
 This syntax splits arguments like this:
@@ -74,10 +74,10 @@ This syntax splits arguments like this:
 Direct subcommands also work:
 
 ```sh
-kubectl env render --dotenv -f examples/configmap.yaml
-kubectl env apply --dotenv -f examples/configmap.yaml -- --namespace default
-kubectl env render -f manifests/ --recursive
-kubectl env render --shell-style -f deployment.yaml
+kubectl kenv render --dotenv -f examples/configmap.yaml
+kubectl kenv apply --dotenv -f examples/configmap.yaml -- --namespace default
+kubectl kenv render -f manifests/ --recursive
+kubectl kenv render --shell-style -f deployment.yaml
 ```
 
 > [!IMPORTANT]

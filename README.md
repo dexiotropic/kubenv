@@ -25,10 +25,10 @@ Compared to a generic `envsubst` wrapper, `kubenv` is intentionally stricter:
 
 - explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
 - fail-fast behavior on missing variables
-- the same renderer exposed through the direct CLI, `kubectl env`, and Argo CD CMP
+- the same renderer exposed through the direct CLI, `kubectl kenv`, and Argo CD CMP
 - explicit dotenv and `--set` inputs instead of relying only on ambient shell state
 
-If you need shell-style placeholders for an existing manifest set, you can opt into `$VAR` / `${VAR}` rendering while keeping `{{ env.NAME }}` as the default mode. The direct CLI and `kubectl env` use `--shell-style`, and the Argo CD CMP uses the `kubenv.shell-style` plugin parameter.
+If you need shell-style placeholders for an existing manifest set, you can opt into `$VAR` / `${VAR}` rendering while keeping `{{ env.NAME }}` as the default mode. The direct CLI and `kubectl kenv` use `--shell-style`, and the Argo CD CMP uses the `kubenv.shell-style` plugin parameter.
 
 ## Comparison with `kubectl-envsubst`
 
@@ -37,7 +37,7 @@ If you need shell-style placeholders for an existing manifest set, you can opt i
 | Area | `kubectl-envsubst` | `kubenv` |
 | --- | --- | --- |
 | Placeholder syntax | Shell-style `$VAR` / `${VAR}` | Explicit `{{ env.NAME }}` by default, with optional shell-style support in every entrypoint |
-| Main interface | `kubectl envsubst apply ...` | `kubenv`, `kubectl env`, and Argo CD CMP |
+| Main interface | `kubectl envsubst apply ...` | `kubenv`, `kubectl kenv`, and Argo CD CMP |
 | Variable source model | Process env filtered by allowed vars or prefixes | `--set`, process env, dotenv, and CMP parameters |
 | Safety model | Allow-list and prefix filters reduce accidental substitutions | Placeholder syntax avoids shell-style collisions and missing variables fail immediately |
 | File handling | Supports directory walking, glob expansion, recursive mode, stdin, and remote URLs | Supports files, directories, glob expansion, recursive mode, stdin, and remote URLs |
@@ -64,13 +64,13 @@ You can use the same renderer through three entrypoints:
 | Entrypoint | Purpose | Docs |
 | --- | --- | --- |
 | `kubenv` | Direct CLI for rendering or applying manifests | [`docs/KUBENV.md`](docs/KUBENV.md) |
-| `kubectl env` | kubectl plugin wrapper around the same renderer | [`docs/KUBECTL.md`](docs/KUBECTL.md) |
+| `kubectl kenv` | kubectl plugin wrapper around the same renderer | [`docs/KUBECTL.md`](docs/KUBECTL.md) |
 | `kubenv-argocd-cmp` | Argo CD Config Management Plugin entrypoint | [`docs/ARGOCD.md`](docs/ARGOCD.md) |
 
 If you are looking around the source tree:
 
 - `cmd/kubenv`: main CLI binary
-- `cmd/kubectl-env`: kubectl plugin binary
+- `cmd/kubectl-kenv`: kubectl plugin binary
 - `cmd/kubenv-argocd-cmp`: Argo CD CMP binary
 - `internal/render`: placeholder parsing and substitution
 - `internal/cli`: direct CLI and kubectl plugin orchestration
@@ -95,7 +95,7 @@ If you want the kubectl plugin:
 Once this plugin is published in the public Krew index, the expected install command will be:
 
 ```sh
-kubectl krew install env
+kubectl krew install kenv
 ```
 
 If you want Argo CD CMP integration:
@@ -118,14 +118,14 @@ If you are maintaining releases for this project, the release flow uses:
 Published releases are intended to include:
 
 - `kubenv` archives for Linux, macOS, and Windows
-- `kubectl-env` archives for Linux, macOS, and Windows
+- `kubectl-kenv` archives for Linux, macOS, and Windows
 - `kubenv-argocd-cmp` archives for Linux
 - `checksums.txt`
 - a generated Homebrew formula artifact
 - a generated Krew plugin manifest
 - published `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` and `ghcr.io/dexiotropic/kubenv-argocd-cmp:latest` images
 
-Use the generated `env.yaml` release asset when you open a `krew-index` submission PR.
+Use the generated `kenv.yaml` release asset when you open a `krew-index` submission PR.
 
 If you also want the Homebrew tap updated automatically after each published release, set:
 

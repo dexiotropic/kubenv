@@ -9,23 +9,23 @@ import (
 	ucli "github.com/urfave/cli/v3"
 )
 
-// RunKubectlPlugin is the entrypoint for the kubectl env plugin.
+// RunKubectlPlugin is the entrypoint for the kubectl kenv plugin.
 func RunKubectlPlugin(args []string, stdin io.Reader, stdout, stderr io.Writer, environ []string) error {
 	if usesImplicitApplySyntax(args) {
 		command := newKubectlImplicitApplyCommand(stdin, stdout, stderr, environ)
-		return command.Run(context.Background(), append([]string{"kubectl env"}, args...))
+		return command.Run(context.Background(), append([]string{"kubectl kenv"}, args...))
 	}
 
 	command := newKubectlPluginCommand(stdin, stdout, stderr, environ)
-	return command.Run(context.Background(), append([]string{"kubectl env"}, args...))
+	return command.Run(context.Background(), append([]string{"kubectl kenv"}, args...))
 }
 
 func newKubectlPluginCommand(stdin io.Reader, stdout, stderr io.Writer, environ []string) *ucli.Command {
 	return &ucli.Command{
-		Name:  "kubectl env",
+		Name:  "kubectl kenv",
 		Usage: "Render manifests through kubectl",
-		UsageText: `kubectl env [kubenv flags] apply [kubectl apply flags]
-kubectl env <render|apply|version> [flags]`,
+		UsageText: `kubectl kenv [kubenv flags] apply [kubectl apply flags]
+kubectl kenv <render|apply|version> [flags]`,
 		Description: "Use the first form to put kubenv flags before apply and pass the remaining arguments directly to kubectl apply.",
 		Version:     version.String(),
 		Reader:      stdin,
@@ -41,7 +41,7 @@ kubectl env <render|apply|version> [flags]`,
 			{
 				Name:      "render",
 				Usage:     "Render manifests to stdout",
-				UsageText: "kubectl env render [flags]",
+				UsageText: "kubectl kenv render [flags]",
 				Flags:     renderFlags(),
 				Action: func(_ context.Context, cmd *ucli.Command) error {
 					options, err := renderOptionsFromCommand(cmd)
@@ -64,7 +64,7 @@ kubectl env <render|apply|version> [flags]`,
 			{
 				Name:      "apply",
 				Usage:     "Render manifests and run kubectl apply -f -",
-				UsageText: "kubectl env apply [flags] -- [kubectl apply flags]",
+				UsageText: "kubectl kenv apply [flags] -- [kubectl apply flags]",
 				Flags:     renderFlags(),
 				Action: func(_ context.Context, cmd *ucli.Command) error {
 					options, err := renderOptionsFromCommand(cmd)
@@ -96,9 +96,9 @@ func newKubectlImplicitApplyCommand(stdin io.Reader, stdout, stderr io.Writer, e
 	stopOnFirstArg := 1
 
 	return &ucli.Command{
-		Name:         "kubectl env",
+		Name:         "kubectl kenv",
 		Usage:        "Render manifests and run kubectl apply -f -",
-		UsageText:    "kubectl env [kubenv flags] apply [kubectl apply flags]",
+		UsageText:    "kubectl kenv [kubenv flags] apply [kubectl apply flags]",
 		Description:  "Arguments before apply are handled by kubenv. Arguments after apply are forwarded to kubectl apply.",
 		Version:      version.String(),
 		Reader:       stdin,
