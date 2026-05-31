@@ -2,7 +2,7 @@
 
 Use the `kubenv` binary when you want to render manifests locally with strict `{{ env.NAME }}` substitution.
 
-That explicit placeholder style is the default. If you already have manifests written with shell-style placeholders, you can switch to `$VAR` / `${VAR}` rendering with `--shell-style`.
+That explicit placeholder style is the default. If you already have manifests written with shell-style placeholders, you can switch to `$VAR` / `${VAR}` rendering with `--shell-style`. If you need a literal explicit placeholder in rendered output, write `{{ !env.NAME }}` and kubenv will emit `{{ env.NAME }}` without substituting it.
 
 ## Installation
 
@@ -77,4 +77,5 @@ Keep in mind:
 - directories include `.yaml`, `.yml`, and `.json` files
 - `--recursive` (or `-R`) walks directory inputs recursively
 - `--shell-style` switches placeholder parsing from `{{ env.NAME }}` to `$NAME` / `${NAME}`
+- `{{ !env.NAME }}` escapes an explicit placeholder and renders it back as `{{ env.NAME }}`
 - dotenv parsing is intentionally minimal: blank lines and `#` comments are supported, and variable lines must be `KEY=VALUE`

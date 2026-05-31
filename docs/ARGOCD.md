@@ -140,6 +140,11 @@ data:
   message: "{{ env.GREETING }} {{ env.NAME }}"
 ```
 
+If part of a manifest must keep a literal explicit placeholder for another tool,
+write `{{ !env.NAME }}`. kubenv will render that back to `{{ env.NAME }}`
+without substituting it, so you can mix kubenv-rendered fields with literal
+placeholders in the same manifest.
+
 To switch the Argo CD CMP to shell-style placeholders for one application, set the `kubenv` map parameter:
 
 ```yaml

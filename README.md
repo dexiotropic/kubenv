@@ -28,7 +28,7 @@ Compared to a generic `envsubst` wrapper, `kubenv` is intentionally stricter:
 - the same renderer exposed through the direct CLI, `kubectl kenv`, and Argo CD CMP
 - explicit dotenv and `--set` inputs instead of relying only on ambient shell state
 
-If you need shell-style placeholders for an existing manifest set, you can opt into `$VAR` / `${VAR}` rendering while keeping `{{ env.NAME }}` as the default mode. The direct CLI and `kubectl kenv` use `--shell-style`, and the Argo CD CMP uses the `kubenv.shell-style` plugin parameter.
+If you need shell-style placeholders for an existing manifest set, you can opt into `$VAR` / `${VAR}` rendering while keeping `{{ env.NAME }}` as the default mode. The direct CLI and `kubectl kenv` use `--shell-style`, and the Argo CD CMP uses the `kubenv.shell-style` plugin parameter. If you need a literal explicit placeholder in output, write `{{ !env.NAME }}` and kubenv will emit `{{ env.NAME }}` without substituting it.
 
 ## Comparison with `kubectl-envsubst`
 

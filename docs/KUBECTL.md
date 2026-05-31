@@ -26,7 +26,7 @@ Once the plugin is available in the public Krew index, install it with:
 kubectl krew install kenv
 ```
 
-The default placeholder style is still `{{ env.NAME }}`. If you need compatibility with existing shell-style manifests, add `--shell-style` before `apply` or before the direct `render` / `apply` subcommand.
+The default placeholder style is still `{{ env.NAME }}`. If you need compatibility with existing shell-style manifests, add `--shell-style` before `apply` or before the direct `render` / `apply` subcommand. If you need a literal explicit placeholder in output, write `{{ !env.NAME }}` and kubenv will emit `{{ env.NAME }}` without substituting it.
 
 You can inspect plugin help directly:
 

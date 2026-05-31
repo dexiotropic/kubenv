@@ -24,6 +24,43 @@ func TestStrictFailsOnMissingVariables(t *testing.T) {
 	}
 }
 
+func TestStrictPreservesEscapedExplicitVariables(t *testing.T) {
+	input := []byte("message: {{ !env.GREETING }}\n")
+	output, err := Strict(input, map[string]string{"GREETING": "hello"})
+	if err != nil {
+		t.Fatalf("Strict returned error: %v", err)
+	}
+
+	if !bytes.Equal(output, []byte("message: {{ env.GREETING }}\n")) {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestStrictCanMixRenderedAndEscapedExplicitVariables(t *testing.T) {
+	input := []byte("name: {{ env.NAME }}\nmessage: {{ !env.NAME }}\n")
+	output, err := Strict(input, map[string]string{"NAME": "world"})
+	if err != nil {
+		t.Fatalf("Strict returned error: %v", err)
+	}
+
+	want := []byte("name: world\nmessage: {{ env.NAME }}\n")
+	if !bytes.Equal(output, want) {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
+func TestStrictDoesNotRequireEscapedVariablesToExist(t *testing.T) {
+	input := []byte("message: {{ !env.GREETING }}\n")
+	output, err := Strict(input, map[string]string{})
+	if err != nil {
+		t.Fatalf("Strict returned error: %v", err)
+	}
+
+	if !bytes.Equal(output, []byte("message: {{ env.GREETING }}\n")) {
+		t.Fatalf("unexpected output: %q", output)
+	}
+}
+
 func TestStrictWithShellStyleReplacesVariables(t *testing.T) {
 	input := []byte("message: $GREETING ${TARGET}\n")
 	output, err := StrictWithStyle(input, map[string]string{

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 // Style controls which placeholder syntax the renderer accepts.
@@ -18,6 +19,9 @@ const (
 
 // Match variables in the form of {{ env.VAR_NAME }}
 var explicitVariablePattern = regexp.MustCompile(`\{\{\s*env\.([A-Z_][A-Z0-9_]*)\s*\}\}`)
+
+// Match escaped variables in the form of {{ !env.VAR_NAME }}
+var escapedExplicitVariablePattern = regexp.MustCompile(`\{\{\s*!env\.([A-Z_][A-Z0-9_]*)\s*\}\}`)
 
 // Match variables in the form of $VAR or ${VAR}
 var shellVariablePattern = regexp.MustCompile(`\$\{?([a-zA-Z_][a-zA-Z0-9_]*)\}?`)
@@ -41,18 +45,45 @@ func Strict(input []byte, vars map[string]string) ([]byte, error) {
 
 // StrictWithStyle renders using the provided placeholder style and fails on missing variables.
 func StrictWithStyle(input []byte, vars map[string]string, style Style) ([]byte, error) {
-	pattern := explicitVariablePattern
 	switch style {
 	case StyleExplicit:
-		pattern = explicitVariablePattern
+		output, missing := renderExplicit(string(input), vars)
+		if len(missing) > 0 {
+			return nil, fmt.Errorf("missing variables: %v", keys(missing))
+		}
+
+		return []byte(output), nil
 	case StyleShell:
-		pattern = shellVariablePattern
+		output, missing := renderWithPattern(string(input), vars, shellVariablePattern)
+		if len(missing) > 0 {
+			return nil, fmt.Errorf("missing variables: %v", keys(missing))
+		}
+
+		return []byte(output), nil
 	default:
 		return nil, fmt.Errorf("unknown render style: %s", style)
 	}
+}
 
+func renderExplicit(input string, vars map[string]string) (string, map[string]struct{}) {
+	escaped := map[string]string{}
+	protected := escapedExplicitVariablePattern.ReplaceAllStringFunc(input, func(match string) string {
+		token := fmt.Sprintf("__KUBENV_ESCAPED_%d__", len(escaped))
+		escaped[token] = strings.Replace(match, "!env.", "env.", 1)
+		return token
+	})
+
+	output, missing := renderWithPattern(protected, vars, explicitVariablePattern)
+	for token, literal := range escaped {
+		output = strings.ReplaceAll(output, token, literal)
+	}
+
+	return output, missing
+}
+
+func renderWithPattern(input string, vars map[string]string, pattern *regexp.Regexp) (string, map[string]struct{}) {
 	missing := map[string]struct{}{}
-	output := pattern.ReplaceAllStringFunc(string(input), func(match string) string {
+	output := pattern.ReplaceAllStringFunc(input, func(match string) string {
 		submatches := pattern.FindStringSubmatch(match)
 
 		if len(submatches) < 2 {
@@ -67,12 +98,7 @@ func StrictWithStyle(input []byte, vars map[string]string, style Style) ([]byte,
 		}
 		return value
 	})
-
-	if len(missing) > 0 {
-		return nil, fmt.Errorf("missing variables: %v", keys(missing))
-	}
-
-	return []byte(output), nil
+	return output, missing
 }
 
 func splitEnv(entry string) (string, string, bool) {
