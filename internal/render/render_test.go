@@ -45,3 +45,28 @@ func TestStrictWithShellStyleFailsOnMissingVariables(t *testing.T) {
 		t.Fatal("expected missing variable error")
 	}
 }
+
+func TestFromEnvironParsesEntriesWithEquals(t *testing.T) {
+	vars := FromEnviron([]string{
+		"GREETING=hello",
+		"TARGET=world=wide",
+		"INVALID",
+	})
+
+	if got := vars["GREETING"]; got != "hello" {
+		t.Fatalf("unexpected GREETING: %q", got)
+	}
+	if got := vars["TARGET"]; got != "world=wide" {
+		t.Fatalf("unexpected TARGET: %q", got)
+	}
+	if _, ok := vars["INVALID"]; ok {
+		t.Fatal("expected invalid entry to be ignored")
+	}
+}
+
+func TestStrictWithUnknownStyleFails(t *testing.T) {
+	_, err := StrictWithStyle([]byte("message: {{ env.GREETING }}\n"), map[string]string{}, Style("unknown"))
+	if err == nil {
+		t.Fatal("expected unknown style error")
+	}
+}

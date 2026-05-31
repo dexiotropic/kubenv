@@ -549,6 +549,59 @@ func TestRunRenderFailsOnInvalidSetSyntax(t *testing.T) {
 	}
 }
 
+func TestRunRenderRejectsPositionalArguments(t *testing.T) {
+	var stdout bytes.Buffer
+	err := Run(
+		[]string{"render", "unexpected"},
+		strings.NewReader("msg: {{ env.GREETING }}\n"),
+		&stdout,
+		ioDiscard{},
+		nil,
+	)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	assertContains(t, err.Error(), "render does not accept positional arguments: unexpected")
+}
+
+func TestRunKubectlPluginRenderRejectsPositionalArguments(t *testing.T) {
+	var stdout bytes.Buffer
+	err := RunKubectlPlugin(
+		[]string{"render", "unexpected"},
+		strings.NewReader("msg: {{ env.GREETING }}\n"),
+		&stdout,
+		ioDiscard{},
+		nil,
+	)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+
+	assertContains(t, err.Error(), "render does not accept positional arguments: unexpected")
+}
+
+func TestRunKubectlPluginImplicitSyntaxWithoutApplyShowsHelp(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	err := RunKubectlPlugin(
+		[]string{"--set", "GREETING=hello", "render", "apply"},
+		strings.NewReader("msg: {{ env.GREETING }}\n"),
+		&stdout,
+		&stderr,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("RunKubectlPlugin returned error: %v", err)
+	}
+
+	assertContains(t, stdout.String(), "kubectl kenv [kubenv flags] apply [kubectl apply flags]")
+	if got := stderr.String(); got != "" {
+		t.Fatalf("unexpected stderr: %q", got)
+	}
+}
+
 func writeFile(t *testing.T, path, content string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
