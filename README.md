@@ -7,6 +7,9 @@ https://github.com/user-attachments/assets/472836a9-9c18-47b6-9c8d-201b07dce15f
 
 `kubenv` is a minimal manifest renderer for Kubernetes-focused variable substitution.
 
+If you want the documentation site content that is intended for GitBook, start in
+[`docs/README.md`](docs/README.md).
+
 It is intentionally narrow in scope:
 
 - strict `{{ env.VAR }}` substitution
@@ -78,7 +81,7 @@ If you are looking around the source tree:
 - `docs/`: focused entrypoint documentation
 - `examples/`: sample manifests
 - `packaging/argocd/`: CMP configuration assets
-- `packaging/krew/`: Krew manifest templates
+- `.krew.yaml`: Krew release template used for generated assets and index updates
 - `.goreleaser.yaml`: multi-platform release configuration
 - `.github/workflows/`: CI and release automation
 
@@ -113,7 +116,8 @@ If you are maintaining releases for this project, the release flow uses:
 
 - **Release Please** for conventional-commit-driven versioning and GitHub releases
 - **GoReleaser** for multi-platform binaries, checksums, and the Argo CD CMP image
-- repo scripts for generating the Homebrew formula and Krew manifest release assets
+- repo scripts for generating the Homebrew formula and Argo CD release assets
+- **krew-release-bot** for automated `krew-index` update PRs after published releases
 
 Published releases are intended to include:
 
@@ -125,7 +129,9 @@ Published releases are intended to include:
 - a generated Krew plugin manifest
 - published `ghcr.io/dexiotropic/kubenv-argocd-cmp:<tag>` and `ghcr.io/dexiotropic/kubenv-argocd-cmp:latest` images
 
-Use the generated `kenv.yaml` release asset when you open a `krew-index` submission PR.
+Release automation also renders and uploads a `kenv.yaml` asset from `.krew.yaml`
+for visibility and manual fallback, but normal public `krew-index` updates are
+opened automatically after each non-prerelease GitHub release.
 
 If you also want the Homebrew tap updated automatically after each published release, set:
 

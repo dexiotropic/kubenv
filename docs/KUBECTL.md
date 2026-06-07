@@ -18,7 +18,9 @@ Make sure the output directory is on `PATH`, then verify:
 kubectl plugin list
 ```
 
-Release automation also generates a Krew manifest release asset named `kenv.yaml`, which you can use when submitting the plugin to a Krew index repository.
+Release automation generates a `kenv.yaml` Krew manifest asset from `.krew.yaml`
+and also uses `krew-release-bot` to open public `krew-index` update PRs after
+each non-prerelease GitHub release.
 
 Once the plugin is available in the public Krew index, install it with:
 

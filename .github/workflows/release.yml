@@ -53,7 +53,13 @@ jobs:
           cp packaging/argocd/plugin.yaml "dist/kubenv-argocd-plugin.yaml"
           ./scripts/generate-argocd-plugin.sh "dist/kubenv-argocd-plugin-versioned.yaml" "$TAG"
           ./scripts/generate-homebrew-formula.sh "$TAG" "$VERSION" "$REPOSITORY" "dist/kubenv.rb"
-          ./scripts/generate-krew-manifest.sh "$TAG" "$VERSION" "$REPOSITORY" "dist/kenv.yaml"
+          docker run --rm \
+            -v "$PWD:/workdir" \
+            ghcr.io/rajatjindal/krew-release-bot:v0.0.50 \
+            krew-release-bot template \
+            --tag "$TAG" \
+            --template-file /workdir/.krew.yaml \
+            > dist/kenv.yaml
 
       - name: Upload extra release assets
         env:
@@ -86,3 +92,9 @@ jobs:
             "${HOMEBREW_TAP_BRANCH:-main}" \
             "github-actions[bot]" \
             "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update Krew index
+        if: ${{ !github.event.release.prerelease }}
+        uses: rajatjindal/krew-release-bot@v0.0.50
+        with:
+          krew_plugin_release_tag: ${{ github.event.release.tag_name }}

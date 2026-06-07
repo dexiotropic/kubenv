@@ -1,0 +1,49 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: kenv
+spec:
+  version: {{ .TagName }}
+  homepage: https://github.com/dexiotropic/kubenv
+  shortDescription: Render manifest variables
+  description: |
+    Render Kubernetes manifest variables before applying resources with
+    kubectl. The plugin uses explicit env placeholders by default and can
+    also render shell-style $NAME and ${NAME} placeholders.
+  platforms:
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    {{addURIAndSha "https://github.com/dexiotropic/kubenv/releases/download/{{ .TagName }}/kubenv_kubectl-kenv_{{ slice .TagName 1 }}_linux_amd64.tar.gz" .TagName }}
+    bin: kubectl-kenv
+  - selector:
+      matchLabels:
+        os: linux
+        arch: arm64
+    {{addURIAndSha "https://github.com/dexiotropic/kubenv/releases/download/{{ .TagName }}/kubenv_kubectl-kenv_{{ slice .TagName 1 }}_linux_arm64.tar.gz" .TagName }}
+    bin: kubectl-kenv
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    {{addURIAndSha "https://github.com/dexiotropic/kubenv/releases/download/{{ .TagName }}/kubenv_kubectl-kenv_{{ slice .TagName 1 }}_darwin_amd64.tar.gz" .TagName }}
+    bin: kubectl-kenv
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    {{addURIAndSha "https://github.com/dexiotropic/kubenv/releases/download/{{ .TagName }}/kubenv_kubectl-kenv_{{ slice .TagName 1 }}_darwin_arm64.tar.gz" .TagName }}
+    bin: kubectl-kenv
+  - selector:
+      matchLabels:
+        os: windows
+        arch: amd64
+    {{addURIAndSha "https://github.com/dexiotropic/kubenv/releases/download/{{ .TagName }}/kubenv_kubectl-kenv_{{ slice .TagName 1 }}_windows_amd64.zip" .TagName }}
+    bin: kubectl-kenv.exe
+  - selector:
+      matchLabels:
+        os: windows
+        arch: arm64
+    {{addURIAndSha "https://github.com/dexiotropic/kubenv/releases/download/{{ .TagName }}/kubenv_kubectl-kenv_{{ slice .TagName 1 }}_windows_arm64.zip" .TagName }}
+    bin: kubectl-kenv.exe
