@@ -65,8 +65,10 @@ kubenv render --set GREETING=hello --set NAME=world -f manifest.yaml
 ## Start here
 
 - [Getting started](getting-started.md)
+- [Entrypoints](entrypoints.md)
 - [kubenv CLI](KUBENV.md)
 - [kubectl plugin](KUBECTL.md)
 - [Argo CD CMP](ARGOCD.md)
+- [Maintainers](maintainers.md)
 - [Release automation](release-automation.md)
 - [Project architecture](architecture.md)
