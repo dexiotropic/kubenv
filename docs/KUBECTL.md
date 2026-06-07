@@ -1,4 +1,8 @@
-# kubectl kenv plugin
+---
+icon: plug
+---
+
+# kubectl plugin
 
 Use the kubectl plugin when you want the same renderer exposed as:
 
@@ -18,9 +22,7 @@ Make sure the output directory is on `PATH`, then verify:
 kubectl plugin list
 ```
 
-Release automation generates a `kenv.yaml` Krew manifest asset from `.krew.yaml`
-and also uses `krew-release-bot` to open public `krew-index` update PRs after
-each non-prerelease GitHub release.
+Release automation generates a `kenv.yaml` Krew manifest asset from `.krew.yaml` and also uses `krew-release-bot` to open public `krew-index` update PRs after each non-prerelease GitHub release.
 
 Once the plugin is available in the public Krew index, install it with:
 
@@ -44,15 +46,15 @@ kubectl kenv apply --help
 
 `kubectl-envsubst` still supports one notable capability that `kubenv` does not:
 
-- allow-list and prefix-based filtering over `$VAR` / `${VAR}` placeholders
+* allow-list and prefix-based filtering over `$VAR` / `${VAR}` placeholders
 
 `kubenv` makes the opposite trade:
 
-- it uses explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
-- it shares the same render behavior across `kubenv`, `kubectl kenv`, and Argo CD CMP
-- it supports dotenv files and explicit `--set` overrides in addition to process env
-- it supports files, directories, glob patterns, recursive directory traversal, stdin, and remote `-f https://...` manifests
-- it can also opt into `$VAR` / `${VAR}` rendering with `--shell-style` when you need that compatibility
+* it uses explicit `{{ env.NAME }}` placeholders instead of shell-style expansion
+* it shares the same render behavior across `kubenv`, `kubectl kenv`, and Argo CD CMP
+* it supports dotenv files and explicit `--set` overrides in addition to process env
+* it supports files, directories, glob patterns, recursive directory traversal, stdin, and remote `-f https://...` manifests
+* it can also opt into `$VAR` / `${VAR}` rendering with `--shell-style` when you need that compatibility
 
 So if you are working with existing `${VAR}` manifests and want behavior close to a stricter `kubectl apply` wrapper, `kubectl-envsubst` may be a better fit today. If you want explicit placeholders and consistent behavior across local and GitOps entrypoints, `kubenv` is the better fit.
 
@@ -70,8 +72,8 @@ kubectl kenv --shell-style --set IMAGE_TAG=1.2.3 -f deployment.yaml apply --name
 
 This syntax splits arguments like this:
 
-- before `apply`: kubenv flags
-- after `apply`: raw `kubectl apply` flags
+* before `apply`: kubenv flags
+* after `apply`: raw `kubectl apply` flags
 
 Direct subcommands also work:
 
@@ -82,5 +84,4 @@ kubectl kenv render -f manifests/ --recursive
 kubectl kenv render --shell-style -f deployment.yaml
 ```
 
-> [!IMPORTANT]
-> If you want a file rendered by kubenv, place its `-f` flag before `apply`. Any `-f` that appears after `apply` is passed directly to `kubectl apply`.
+> \[!IMPORTANT] If you want a file rendered by kubenv, place its `-f` flag before `apply`. Any `-f` that appears after `apply` is passed directly to `kubectl apply`.

@@ -1,14 +1,18 @@
+---
+icon: code-simple
+---
+
 # Maintainers
 
-These pages are for maintainers and contributors who need to understand how the
-project is structured and how releases are published.
+These pages are for maintainers and contributors who need to understand how the project is structured and how releases are published.
 
 ## Maintenance topics
 
-- [Release automation](release-automation.md)
-- [Project architecture](architecture.md)
+* [release-automation.md](release-automation.md "mention")
+* [architecture.md](architecture.md "mention")
 
 ## Related repository content
 
-- [Contributing](../CONTRIBUTING.md)
-- [Changelog](../CHANGELOG.md)
+* [Contributing](../CONTRIBUTING.md)
+* [Changelog](../CHANGELOG.md)
+

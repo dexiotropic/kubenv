@@ -1,3 +1,7 @@
+---
+icon: bolt
+---
+
 # Getting started
 
 This page gives you the shortest path to a working render flow.
@@ -6,9 +10,9 @@ This page gives you the shortest path to a working render flow.
 
 Use the entrypoint that matches where rendering should happen:
 
-- `kubenv` for local CLI usage
-- `kubectl kenv` for kubectl-native workflows
-- `kubenv-argocd-cmp` for Argo CD and GitOps workflows
+* `kubenv` for local CLI usage
+* `kubectl kenv` for kubectl-native workflows
+* `kubenv-argocd-cmp` for Argo CD and GitOps workflows
 
 If you are not sure, start with `kubenv`.
 
@@ -74,6 +78,6 @@ That renders back to:
 
 ## 5. Continue with the page for your workflow
 
-- [kubenv CLI](KUBENV.md)
-- [kubectl plugin](KUBECTL.md)
-- [Argo CD CMP](ARGOCD.md)
+* [KUBENV.md](KUBENV.md "mention")
+* [KUBECTL.md](KUBECTL.md "mention")
+* [ARGOCD.md](ARGOCD.md "mention")

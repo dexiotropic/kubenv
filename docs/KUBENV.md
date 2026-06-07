@@ -1,3 +1,7 @@
+---
+icon: square-terminal
+---
+
 # kubenv CLI
 
 Use the `kubenv` binary when you want to render manifests locally with strict `{{ env.NAME }}` substitution.
@@ -68,14 +72,14 @@ Any arguments after `--` are forwarded to `kubectl apply`.
 
 Keep in mind:
 
-- `--dotenv` loads `.env`
-- `--dotenv-file <path>` loads a specific dotenv file
-- `--ignore-process-env` disables process environment loading
-- `--dotenv` and `--dotenv-file` are mutually exclusive
-- `-f` may be repeated and inputs are rendered in the order provided
-- `-f` accepts files, directories, glob patterns, and `http` / `https` URLs
-- directories include `.yaml`, `.yml`, and `.json` files
-- `--recursive` (or `-R`) walks directory inputs recursively
-- `--shell-style` switches placeholder parsing from `{{ env.NAME }}` to `$NAME` / `${NAME}`
-- `{{ !env.NAME }}` escapes an explicit placeholder and renders it back as `{{ env.NAME }}`
-- dotenv parsing is intentionally minimal: blank lines and `#` comments are supported, and variable lines must be `KEY=VALUE`
+* `--dotenv` loads `.env`
+* `--dotenv-file <path>` loads a specific dotenv file
+* `--ignore-process-env` disables process environment loading
+* `--dotenv` and `--dotenv-file` are mutually exclusive
+* `-f` may be repeated and inputs are rendered in the order provided
+* `-f` accepts files, directories, glob patterns, and `http` / `https` URLs
+* directories include `.yaml`, `.yml`, and `.json` files
+* `--recursive` (or `-R`) walks directory inputs recursively
+* `--shell-style` switches placeholder parsing from `{{ env.NAME }}` to `$NAME` / `${NAME}`
+* `{{ !env.NAME }}` escapes an explicit placeholder and renders it back as `{{ env.NAME }}`
+* dotenv parsing is intentionally minimal: blank lines and `#` comments are supported, and variable lines must be `KEY=VALUE`
