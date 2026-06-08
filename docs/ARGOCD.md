@@ -21,15 +21,19 @@ Release automation publishes:
 
 The installation process changes based on your Argo CD management and deployment model, however all these methods involve adding a sidecar container to `argocd-repo-server` that runs the published image. Because `plugin.yaml` is baked into the image, you do **not** need a separate ConfigMap mount for it unless you want to override the baked configuration.
 
-> \[!TIP] If you prefer automatic sidecar updates, use `:latest` in the next examples. If you prefer reproducible deployments, pin a specific release tag such as `:v0.2.1`. You can find these tags on the [GitHub Container Registry page for this project](https://github.com/dexiotropic/kubenv/pkgs/container/kubenv-argocd-cmp).
+{% hint style="info" %}
+If you prefer automatic sidecar updates, use `:latest` in the next examples. If you prefer reproducible deployments, pin a specific release tag such as `:v0.2.1`. You can find these tags on the [GitHub Container Registry page for this project](https://github.com/dexiotropic/kubenv/pkgs/container/kubenv-argocd-cmp).&#x20;
+{% endhint %}
 
-> \[!IMPORTANT] When you use `:latest`, the baked plugin config does **not** set `spec.version`, so your Argo CD applications should use:
->
-> * `spec.source.plugin.name: kubenv`
->
-> When you use a pinned sidecar image such as `:v0.3.0`, the baked plugin config sets `spec.version: v0.3.0`, so your Argo CD applications should use:
->
-> * `spec.source.plugin.name: kubenv-v0.3.0`
+{% hint style="info" %}
+When you use `:latest`, the baked plugin config does **not** set `spec.version`, so your Argo CD applications should use:
+
+* `spec.source.plugin.name: kubenv`
+
+When you use a pinned sidecar image such as `:v0.3.0`, the baked plugin config sets `spec.version: v0.3.0`, so your Argo CD applications should use:
+
+* `spec.source.plugin.name: kubenv-v0.3.0`
+{% endhint %}
 
 ### Argo CD Operator
 
@@ -189,7 +193,9 @@ argocd app set management-applications \
 
 After that, sync the application and use the value in your manifests as `{{ env.REPO_URL }}`.
 
-> \[!WARNING] If you also set the parameter with `spec.source.plugin.parameters`, the parameter value takes precedence over the environment variable, so `{{ env.REPO_URL }}` would resolve to the parameter value instead of the environment variable value.
+{% hint style="warning" %}
+&#x20;If you also set the parameter with `spec.source.plugin.parameters`, the parameter value takes precedence over the environment variable, so `{{ env.REPO_URL }}` would resolve to the parameter value instead of the environment variable value.
+{% endhint %}
 
 If you are using a pinned sidecar image with a versioned plugin name, replace `kubenv` in that command with the matching plugin name such as `kubenv-v0.3.0`.
 

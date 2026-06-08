@@ -10,6 +10,12 @@ Use the kubectl plugin when you want the same renderer exposed as:
 kubectl kenv
 ```
 
+## Install
+
+```shellscript
+kubectl krew install kenv
+```
+
 ## Build and install locally
 
 ```sh
@@ -21,16 +27,6 @@ Make sure the output directory is on `PATH`, then verify:
 ```sh
 kubectl plugin list
 ```
-
-Release automation generates a `kenv.yaml` Krew manifest asset from `.krew.yaml` and also uses `krew-release-bot` to open public `krew-index` update PRs after each non-prerelease GitHub release.
-
-Once the plugin is available in the public Krew index, install it with:
-
-```sh
-kubectl krew install kenv
-```
-
-The default placeholder style is still `{{ env.NAME }}`. If you need compatibility with existing shell-style manifests, add `--shell-style` before `apply` or before the direct `render` / `apply` subcommand. If you need a literal explicit placeholder in output, write `{{ !env.NAME }}` and kubenv will emit `{{ env.NAME }}` without substituting it.
 
 You can inspect plugin help directly:
 
@@ -55,8 +51,6 @@ kubectl kenv apply --help
 * it supports dotenv files and explicit `--set` overrides in addition to process env
 * it supports files, directories, glob patterns, recursive directory traversal, stdin, and remote `-f https://...` manifests
 * it can also opt into `$VAR` / `${VAR}` rendering with `--shell-style` when you need that compatibility
-
-So if you are working with existing `${VAR}` manifests and want behavior close to a stricter `kubectl apply` wrapper, `kubectl-envsubst` may be a better fit today. If you want explicit placeholders and consistent behavior across local and GitOps entrypoints, `kubenv` is the better fit.
 
 ## Usage
 
@@ -84,4 +78,6 @@ kubectl kenv render -f manifests/ --recursive
 kubectl kenv render --shell-style -f deployment.yaml
 ```
 
-> \[!IMPORTANT] If you want a file rendered by kubenv, place its `-f` flag before `apply`. Any `-f` that appears after `apply` is passed directly to `kubectl apply`.
+{% hint style="info" %}
+If you want a file rendered by kubenv, place its `-f` flag before `apply`. Any `-f` that appears after `apply` is passed directly to `kubectl apply`.
+{% endhint %}
